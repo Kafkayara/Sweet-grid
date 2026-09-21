@@ -1,0 +1,954 @@
+/* =========================================
+   SWEET GRID
+   Premium Match-3 Interface
+========================================= */
+
+
+/* =========================================
+   ROOT
+========================================= */
+
+:root {
+  --background: #0d0f14;
+  --background-soft: #12151c;
+
+  --panel: #171b23;
+  --panel-light: #1e232d;
+  --panel-hover: #252b36;
+
+  --border: #2b313d;
+  --border-light: #363d4a;
+
+  --text: #f5f6f2;
+  --muted: #8c94a3;
+  --muted-light: #b4bac5;
+
+  --yellow: #ffd166;
+  --yellow-soft: #ffe29a;
+
+  --red: #ff5c69;
+  --blue: #48bfe3;
+  --yellow-candy: #f7c948;
+  --green: #72d68a;
+  --purple: #9b87f5;
+  --pink: #ff8fab;
+
+  --gap: 7px;
+
+  --radius-small: 10px;
+  --radius-medium: 14px;
+  --radius-large: 20px;
+
+  --shadow:
+    0 24px 70px rgba(0, 0, 0, 0.38);
+}
+
+
+/* =========================================
+   RESET
+========================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background:
+    radial-gradient(
+      circle at 50% -10%,
+      #292e3a 0%,
+      #171a22 30%,
+      var(--background) 65%
+    );
+
+  color: var(--text);
+
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+
+/* =========================================
+   BUTTON RESET
+========================================= */
+
+button {
+  font: inherit;
+}
+
+
+/* =========================================
+   MAIN GAME
+========================================= */
+
+.game {
+  position: relative;
+
+  width: min(94vw, 520px);
+
+  padding:
+    max(24px, env(safe-area-inset-top))
+    0
+    max(24px, env(safe-area-inset-bottom));
+
+  isolation: isolate;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 20px;
+}
+
+.brand {
+  min-width: 0;
+}
+
+.label {
+  margin: 0 0 6px;
+
+  color: var(--yellow);
+
+  font-size: 10px;
+  font-weight: 850;
+
+  letter-spacing: 0.2em;
+  line-height: 1;
+}
+
+h1 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: clamp(27px, 7vw, 39px);
+  font-weight: 800;
+
+  line-height: 0.98;
+
+  letter-spacing: -0.055em;
+}
+
+
+/* =========================================
+   HEADER ACTIONS
+========================================= */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+
+  margin-left: 16px;
+}
+
+
+/* =========================================
+   RESTART BUTTON
+========================================= */
+
+.restart-btn {
+  display: grid;
+  place-items: center;
+
+  width: 46px;
+  height: 46px;
+
+  padding: 0;
+
+  border: 1px solid var(--border-light);
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      145deg,
+      var(--panel-light),
+      var(--panel)
+    );
+
+  color: var(--text);
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.restart-btn span {
+  display: block;
+
+  font-size: 24px;
+  line-height: 1;
+
+  transition: transform 0.2s ease;
+}
+
+.restart-btn:hover {
+  background: var(--panel-hover);
+  border-color: #454d5b;
+}
+
+.restart-btn:hover span {
+  transform: rotate(-25deg);
+}
+
+.restart-btn:active {
+  transform: scale(0.9);
+}
+
+.restart-btn:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 3px;
+}
+
+
+/* =========================================
+   STATS
+========================================= */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 8px;
+
+  margin-bottom: 12px;
+}
+
+.stat {
+  position: relative;
+
+  min-width: 0;
+
+  padding: 11px 13px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-medium);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(31, 36, 47, 0.95),
+      rgba(21, 25, 33, 0.95)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.stat span {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.13em;
+  line-height: 1;
+}
+
+.stat strong {
+  display: block;
+
+  margin-top: 5px;
+
+  color: var(--text);
+
+  font-size: 20px;
+  font-weight: 750;
+
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+
+/* Score emphasis */
+
+.stat-score strong {
+  color: var(--yellow);
+}
+
+
+/* =========================================
+   GAME AREA
+========================================= */
+
+.game-area {
+  position: relative;
+}
+
+
+/* =========================================
+   BOARD CONTAINER
+========================================= */
+
+.board-container {
+  position: relative;
+
+  padding: 10px;
+
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-large);
+
+  background:
+    linear-gradient(
+      145deg,
+      #1c212a,
+      #151920
+    );
+
+  box-shadow:
+    var(--shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+
+  overflow: hidden;
+}
+
+
+/* Subtle inner frame */
+
+.board-container::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+
+  border-radius: inherit;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.015);
+}
+
+
+/* =========================================
+   BOARD
+========================================= */
+
+.board {
+  display: grid;
+
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+
+  gap: var(--gap);
+
+  width: 100%;
+
+  touch-action: none;
+
+  user-select: none;
+}
+
+
+/* =========================================
+   CANDY
+========================================= */
+
+.candy {
+  position: relative;
+
+  width: 100%;
+  aspect-ratio: 1;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 12px;
+
+  cursor: pointer;
+
+  overflow: hidden;
+
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.17),
+    0 2px 5px rgba(0, 0, 0, 0.18);
+
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease,
+    box-shadow 0.12s ease;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+/* Candy highlight */
+
+.candy::after {
+  content: "";
+
+  position: absolute;
+
+  width: 30%;
+  height: 17%;
+
+  top: 12%;
+  left: 17%;
+
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.42);
+
+  transform: rotate(-25deg);
+
+  pointer-events: none;
+}
+
+
+/* Subtle bottom reflection */
+
+.candy::before {
+  content: "";
+
+  position: absolute;
+
+  left: 12%;
+  right: 12%;
+  bottom: 7%;
+
+  height: 10%;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  pointer-events: none;
+}
+
+
+/* =========================================
+   CANDY HOVER
+========================================= */
+
+@media (hover: hover) {
+
+  .candy:hover {
+    transform: translateY(-2px);
+
+    filter: brightness(1.07);
+
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.34),
+      inset 0 -4px 0 rgba(0, 0, 0, 0.17),
+      0 5px 10px rgba(0, 0, 0, 0.2);
+  }
+
+}
+
+
+/* =========================================
+   CANDY ACTIVE
+========================================= */
+
+.candy:active {
+  transform: scale(0.94);
+}
+
+
+/* =========================================
+   SELECTED CANDY
+========================================= */
+
+.candy.selected {
+  z-index: 2;
+
+  transform: scale(0.86);
+
+  outline: 3px solid rgba(255, 255, 255, 0.96);
+  outline-offset: 2px;
+
+  box-shadow:
+    0 0 0 5px rgba(255, 255, 255, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+
+/* =========================================
+   CANDY COLORS
+========================================= */
+
+.candy-red {
+  background:
+    linear-gradient(
+      145deg,
+      #ff737d 0%,
+      var(--red) 55%,
+      #ec4655 100%
+    );
+}
+
+.candy-blue {
+  background:
+    linear-gradient(
+      145deg,
+      #70d8f2 0%,
+      var(--blue) 55%,
+      #35a8cc 100%
+    );
+}
+
+.candy-yellow {
+  background:
+    linear-gradient(
+      145deg,
+      #ffe27c 0%,
+      var(--yellow-candy) 55%,
+      #e7b331 100%
+    );
+}
+
+.candy-green {
+  background:
+    linear-gradient(
+      145deg,
+      #91e9a4 0%,
+      var(--green) 55%,
+      #55bd70 100%
+    );
+}
+
+.candy-purple {
+  background:
+    linear-gradient(
+      145deg,
+      #b8a9ff 0%,
+      var(--purple) 55%,
+      #806be0 100%
+    );
+}
+
+.candy-pink {
+  background:
+    linear-gradient(
+      145deg,
+      #ffb0c4 0%,
+      var(--pink) 55%,
+      #ec7193 100%
+    );
+}
+
+
+/* =========================================
+   POP ANIMATION
+========================================= */
+
+.candy.pop {
+  animation: popCandy 0.2s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes popCandy {
+
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  45% {
+    transform: scale(1.13);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.1);
+    opacity: 0;
+  }
+
+}
+
+
+/* =========================================
+   GAME FEEDBACK
+========================================= */
+
+.game-feedback {
+  min-height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message {
+  min-height: 20px;
+
+  margin: 10px 2px 0;
+
+  color: var(--muted);
+
+  text-align: center;
+
+  font-size: 13px;
+  line-height: 1.4;
+
+  transition:
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+
+/* =========================================
+   GAME OVER OVERLAY
+========================================= */
+
+.game-overlay {
+  position: fixed;
+  inset: 0;
+
+  z-index: 100;
+
+  display: grid;
+  place-items: center;
+
+  padding: 24px;
+
+  background: rgba(8, 10, 14, 0.76);
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  animation: overlayIn 0.2s ease both;
+}
+
+.game-overlay[hidden] {
+  display: none;
+}
+
+@keyframes overlayIn {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+
+}
+
+
+/* =========================================
+   OVERLAY CARD
+========================================= */
+
+.game-overlay-card {
+  width: min(100%, 360px);
+
+  padding: 30px 26px;
+
+  border: 1px solid var(--border-light);
+  border-radius: 22px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #20252f,
+      #171b23
+    );
+
+  text-align: center;
+
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  animation: cardIn 0.28s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes cardIn {
+
+  from {
+    transform: translateY(12px) scale(0.96);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+}
+
+
+.game-overlay-card .label {
+  margin-bottom: 10px;
+}
+
+.game-overlay-card h2 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 28px;
+  line-height: 1;
+
+  letter-spacing: -0.04em;
+}
+
+.game-overlay-card > p:not(.label) {
+  margin: 12px auto 22px;
+
+  max-width: 280px;
+
+  color: var(--muted);
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+
+/* =========================================
+   FINAL SCORE
+========================================= */
+
+.overlay-score {
+  margin-bottom: 22px;
+}
+
+.overlay-score span {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.15em;
+}
+
+.overlay-score strong {
+  display: block;
+
+  margin-top: 6px;
+
+  color: var(--yellow);
+
+  font-size: 36px;
+  line-height: 1;
+
+  letter-spacing: -0.05em;
+}
+
+
+/* =========================================
+   OVERLAY BUTTON
+========================================= */
+
+.overlay-restart-btn {
+  width: 100%;
+
+  padding: 13px 18px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+
+  background: var(--yellow);
+
+  color: #171717;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 6px 18px rgba(255, 209, 102, 0.12);
+
+  transition:
+    transform 0.14s ease,
+    filter 0.14s ease;
+}
+
+.overlay-restart-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.overlay-restart-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.overlay-restart-btn:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+
+
+/* =========================================
+   GAME STATUS
+========================================= */
+
+.game-status {
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+
+  padding: 0;
+  margin: -1px;
+
+  overflow: hidden;
+
+  clip: rect(0, 0, 0, 0);
+
+  white-space: nowrap;
+
+  border: 0;
+}
+
+
+/* =========================================
+   DISABLED / LOCKED STATE
+========================================= */
+
+.board[aria-disabled="true"] {
+  pointer-events: none;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 520px) {
+
+  .game {
+    width: 94vw;
+  }
+
+}
+
+
+@media (max-width: 400px) {
+
+  :root {
+    --gap: 5px;
+  }
+
+  .game {
+    width: 94vw;
+  }
+
+  .board-container {
+    padding: 7px;
+
+    border-radius: 16px;
+  }
+
+  .candy {
+    border-radius: 10px;
+  }
+
+  .stats {
+    gap: 6px;
+  }
+
+  .stat {
+    padding: 10px;
+  }
+
+  .stat strong {
+    font-size: 18px;
+  }
+
+  h1 {
+    font-size: 27px;
+  }
+
+  .restart-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+}
+
+
+/* =========================================
+   VERY SMALL SCREENS
+========================================= */
+
+@media (max-width: 340px) {
+
+  .game {
+    width: 95vw;
+  }
+
+  .header {
+    margin-bottom: 15px;
+  }
+
+  .label {
+    font-size: 9px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .stat {
+    padding: 9px 8px;
+  }
+
+  .stat span {
+    font-size: 8px;
+  }
+
+  .stat strong {
+    font-size: 16px;
+  }
+
+}
+
+
+/* =========================================
+   REDUCED MOTION
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+}

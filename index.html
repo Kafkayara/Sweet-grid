@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+
+  <meta
+    name="description"
+    content="Sweet Grid — clean and satisfying match-3 puzzle game."
+  >
+
+  <meta name="theme-color" content="#101218">
+
+  <title>Sweet Grid — Match. Pop. Repeat.</title>
+
+  <link rel="stylesheet" href="cs/style.css">
+</head>
+
+<body>
+
+  <main class="game" id="game">
+
+    <!-- =====================================
+         HEADER
+    ====================================== -->
+
+    <header class="header">
+
+      <div class="brand">
+        <p class="label">SWEET GRID</p>
+
+        <h1>Match. Pop. Repeat.</h1>
+      </div>
+
+      <div class="header-actions">
+
+        <button
+          id="restartBtn"
+          class="restart-btn"
+          type="button"
+          aria-label="Mulai ulang permainan"
+          title="Mulai ulang"
+        >
+          <span aria-hidden="true">↻</span>
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <!-- =====================================
+         GAME STATS
+    ====================================== -->
+
+    <section
+      class="stats"
+      aria-label="Informasi permainan"
+    >
+
+      <div class="stat stat-score">
+        <span>SKOR</span>
+        <strong id="score">0</strong>
+      </div>
+
+      <div class="stat stat-moves">
+        <span>LANGKAH</span>
+        <strong id="moves">30</strong>
+      </div>
+
+      <div class="stat stat-target">
+        <span>TARGET</span>
+        <strong id="target">1000</strong>
+      </div>
+
+    </section>
+
+
+    <!-- =====================================
+         GAME AREA
+    ====================================== -->
+
+    <section
+      class="game-area"
+      aria-label="Area permainan"
+    >
+
+      <div class="board-container">
+
+        <div
+          id="board"
+          class="board"
+          role="grid"
+          aria-label="Papan permainan Sweet Grid"
+          aria-rowcount="8"
+          aria-colcount="8"
+        ></div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================
+         GAME MESSAGE
+    ====================================== -->
+
+    <div class="game-feedback">
+
+      <p
+        id="message"
+        class="message"
+        role="status"
+        aria-live="polite"
+      >
+        Pilih dua permen yang bersebelahan untuk bertukar.
+      </p>
+
+    </div>
+
+
+    <!-- =====================================
+         GAME OVER / RESULT OVERLAY
+    ====================================== -->
+
+    <section
+      id="gameOverlay"
+      class="game-overlay"
+      aria-hidden="true"
+      hidden
+    >
+
+      <div class="game-overlay-card">
+
+        <p class="label">SWEET GRID</p>
+
+        <h2 id="overlayTitle">
+          Permainan selesai
+        </h2>
+
+        <p id="overlayMessage">
+          Coba lagi dan pecahkan skor terbaikmu.
+        </p>
+
+        <div class="overlay-score">
+          <span>SKOR</span>
+          <strong id="finalScore">0</strong>
+        </div>
+
+        <button
+          id="overlayRestartBtn"
+          class="overlay-restart-btn"
+          type="button"
+        >
+          Main Lagi
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================
+         GAME STATUS
+    ====================================== -->
+
+    <div
+      id="gameStatus"
+      class="game-status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
+
+  </main>
+
+
+  <!-- =====================================
+       GAME SCRIPT
+  ====================================== -->
+
+  <script src="js/app.js" defer></script>
+
+</body>
+</html>
