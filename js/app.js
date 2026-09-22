@@ -72,6 +72,7 @@ let gameLocked = false;
 let gameOver = false;
 
 let hintTimer = null;
+let hintClearTimer = null;
 
 let idleHintCells = [];
 
@@ -1153,30 +1154,38 @@ async function resolveMatches(
       );
 
 
-    /* Score */
+    /* Expand matches with special candy effects */
+
+    const expanded =
+      expandSpecialEffects(matches);
+
+
+    /*
+      Score dihitung dari expanded.size, bukan
+      matches.size, supaya permen yang ikut hancur
+      karena efek permen spesial juga dihitung.
+    */
 
     const comboMultiplier =
       1 + (combo - 1) * 0.5;
 
 
-    score += Math.round(
-      matches.size *
-      SCORE_PER_CANDY *
-      comboMultiplier
-    );
+    const gained =
+      Math.round(
+        expanded.size *
+        SCORE_PER_CANDY *
+        comboMultiplier
+      );
+
+
+    score += gained;
 
 
     setMessage(
       combo > 1
         ? `COMBO x${combo}`
-        : `Match! +${matches.size * SCORE_PER_CANDY}`
+        : `Match! +${gained}`
     );
-
-
-    /* Expand matches with special candy effects */
-
-    const expanded =
-      expandSpecialEffects(matches);
 
 
     /* Animate */
@@ -1677,6 +1686,15 @@ function getSpecialCombination(
 
 
   if (
+    (firstSpecial === "color-bomb" && secondSpecial === null) ||
+    (secondSpecial === "color-bomb" && firstSpecial === null)
+  ) {
+
+    return "color-normal";
+  }
+
+
+  if (
     firstSpecial === "color-bomb" ||
     secondSpecial === "color-bomb"
   ) {
@@ -1784,10 +1802,10 @@ async function resolveSpecialCombination(
 
   if (
     combination ===
-    "color-special"
+    "color-normal"
   ) {
 
-    const specialPosition =
+    const normalPosition =
       board[
         first.row
       ][
@@ -1797,16 +1815,12 @@ async function resolveSpecialCombination(
         : first;
 
 
-    const targetCandy =
-      board[
-        specialPosition.row
-      ][
-        specialPosition.column
-      ];
-
-
     const targetType =
-      targetCandy.type;
+      board[
+        normalPosition.row
+      ][
+        normalPosition.column
+      ].type;
 
 
     for (
@@ -1827,40 +1841,123 @@ async function resolveSpecialCombination(
 
         if (
           candy &&
-          candy.type === targetType
+          candy.type === targetType &&
+          candy.special !== "color-bomb"
         ) {
 
-          if (
-            Math.random() < 0.5
+          cells.add(
+            `${row},${column}`
+          );
+        }
+      }
+    }
+
+
+    /* Color bomb-nya sendiri ikut hilang */
+
+    cells.add(
+      `${first.row},${first.column}`
+    );
+
+    cells.add(
+      `${second.row},${second.column}`
+    );
+  }
+
+
+  if (
+    combination ===
+    "color-special"
+  ) {
+
+    const specialPosition =
+      board[
+        first.row
+      ][
+        first.column
+      ].special === "color-bomb"
+        ? second
+        : first;
+
+
+    const bombPosition =
+      specialPosition === second
+        ? first
+        : second;
+
+
+    const targetCandy =
+      board[
+        specialPosition.row
+      ][
+        specialPosition.column
+      ];
+
+
+    const targetType =
+      targetCandy.type;
+
+    const targetSpecial =
+      targetCandy.special;
+
+
+    /*
+      Setiap permen sejenis "berubah" menjadi
+      salinan permen spesial pasangannya, lalu
+      langsung diledakkan (bukan diundi dengan
+      Math.random()), supaya hasilnya konsisten.
+    */
+
+    for (
+      let row = 0;
+      row < BOARD_SIZE;
+      row++
+    ) {
+
+      for (
+        let column = 0;
+        column < BOARD_SIZE;
+        column++
+      ) {
+
+        const candy =
+          board[row][column];
+
+
+        if (
+          candy &&
+          candy.type === targetType &&
+          candy.special !== "color-bomb"
+        ) {
+
+          cells.add(
+            `${row},${column}`
+          );
+
+
+          const affected =
+            getSpecialAffectedCells(
+              row,
+              column,
+              { special: targetSpecial }
+            );
+
+          for (
+            const position of affected
           ) {
 
-            for (
-              let current = 0;
-              current < BOARD_SIZE;
-              current++
-            ) {
-
-              cells.add(
-                `${row},${current}`
-              );
-            }
-
-          } else {
-
-            for (
-              let current = 0;
-              current < BOARD_SIZE;
-              current++
-            ) {
-
-              cells.add(
-                `${current},${column}`
-              );
-            }
+            cells.add(position);
           }
         }
       }
     }
+
+
+    /* Color bomb-nya sendiri ikut hilang */
+
+    cells.add(
+      `${bombPosition.row},${bombPosition.column}`
+    );
   }
 
 
@@ -2219,6 +2316,24 @@ function testSwap(
   second
 ) {
 
+  /*
+    Kombinasi permen spesial (mis. color bomb
+    dengan permen biasa) adalah langkah valid
+    walaupun tidak menghasilkan match biasa,
+    jadi dicek dulu sebelum menukar papan.
+  */
+
+  if (
+    getSpecialCombination(
+      first,
+      second
+    )
+  ) {
+
+    return true;
+  }
+
+
   swapCandies(
     first,
     second
@@ -2456,19 +2571,20 @@ function showHint() {
   renderBoard();
 
 
-  setTimeout(
-    () => {
+  hintClearTimer =
+    setTimeout(
+      () => {
 
-      if (
-        idleHintCells.length > 0
-      ) {
+        if (
+          idleHintCells.length > 0
+        ) {
 
-        clearHint();
-      }
+          clearHint();
+        }
 
-    },
-    1500
-  );
+      },
+      1500
+    );
 }
 
 
@@ -2481,6 +2597,12 @@ function clearHint() {
   clearTimeout(hintTimer);
 
   hintTimer = null;
+
+
+  clearTimeout(hintClearTimer);
+
+  hintClearTimer = null;
+
 
   idleHintCells = [];
 }
