@@ -305,6 +305,71 @@ h1 {
 
 
 /* =========================================
+   MODE SELECT
+========================================= */
+
+.mode-select {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  gap: 8px;
+
+  margin-bottom: 12px;
+}
+
+.mode-btn {
+  padding: 10px 12px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-medium);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(31, 36, 47, 0.95),
+      rgba(21, 25, 33, 0.95)
+    );
+
+  color: var(--muted-light);
+
+  font-size: 12px;
+  font-weight: 750;
+
+  letter-spacing: 0.02em;
+
+  cursor: pointer;
+
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.mode-btn:hover {
+  border-color: var(--border-light);
+  color: var(--text);
+}
+
+.mode-btn.is-active {
+  border-color: var(--yellow);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 209, 102, 0.18),
+      rgba(255, 209, 102, 0.06)
+    );
+
+  color: var(--yellow);
+}
+
+.mode-btn:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+
+/* =========================================
    GAME AREA
 ========================================= */
 

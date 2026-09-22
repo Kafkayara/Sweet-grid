@@ -56,6 +56,12 @@ const overlayRestartButton =
 const gameStatus =
   document.getElementById("gameStatus");
 
+const modeTargetButton =
+  document.getElementById("modeTargetBtn");
+
+const modeUnlimitedButton =
+  document.getElementById("modeUnlimitedBtn");
+
 
 /* =========================================
    GAME STATE
@@ -70,6 +76,13 @@ let selectedCandy = null;
 
 let gameLocked = false;
 let gameOver = false;
+
+/*
+  "target"    -> menang kalau skor >= TARGET_SCORE
+  "unlimited" -> tidak ada target, main terus sampai
+                 langkah habis
+*/
+let gameMode = "target";
 
 let hintTimer = null;
 let hintClearTimer = null;
@@ -445,7 +458,9 @@ function updateUI() {
 
   if (targetElement) {
     targetElement.textContent =
-      TARGET_SCORE;
+      gameMode === "unlimited"
+        ? "\u221E"
+        : TARGET_SCORE;
   }
 
   if (finalScoreElement) {
@@ -686,7 +701,10 @@ function finishMove() {
   renderBoard();
 
 
-  if (score >= TARGET_SCORE) {
+  if (
+    gameMode === "target" &&
+    score >= TARGET_SCORE
+  ) {
 
     endGame(true);
 
@@ -2636,6 +2654,13 @@ function endGame(won) {
 
     overlayMessage.textContent =
       "Kamu berhasil melewati target skor.";
+  } else if (gameMode === "unlimited") {
+
+    overlayTitle.textContent =
+      "Langkah habis";
+
+    overlayMessage.textContent =
+      "Mode Tanpa Batas tidak punya target. Coba kalahkan skor ini di percobaan berikutnya.";
   } else {
 
     overlayTitle.textContent =
@@ -2713,6 +2738,55 @@ function wait(milliseconds) {
 
 
 /* =========================================
+   GAME MODE
+========================================= */
+
+function setGameMode(mode) {
+
+  if (mode === gameMode) {
+    return;
+  }
+
+  gameMode = mode;
+
+  restartGame();
+}
+
+
+function updateModeButtons() {
+
+  const isTarget =
+    gameMode === "target";
+
+  if (modeTargetButton) {
+
+    modeTargetButton.classList.toggle(
+      "is-active",
+      isTarget
+    );
+
+    modeTargetButton.setAttribute(
+      "aria-pressed",
+      String(isTarget)
+    );
+  }
+
+  if (modeUnlimitedButton) {
+
+    modeUnlimitedButton.classList.toggle(
+      "is-active",
+      !isTarget
+    );
+
+    modeUnlimitedButton.setAttribute(
+      "aria-pressed",
+      String(!isTarget)
+    );
+  }
+}
+
+
+/* =========================================
    RESTART GAME
 ========================================= */
 
@@ -2733,6 +2807,8 @@ function restartGame() {
   clearHint();
 
   hideOverlay();
+
+  updateModeButtons();
 
   createBoard();
 
@@ -2761,6 +2837,24 @@ if (overlayRestartButton) {
   overlayRestartButton.addEventListener(
     "click",
     restartGame
+  );
+}
+
+
+if (modeTargetButton) {
+
+  modeTargetButton.addEventListener(
+    "click",
+    () => setGameMode("target")
+  );
+}
+
+
+if (modeUnlimitedButton) {
+
+  modeUnlimitedButton.addEventListener(
+    "click",
+    () => setGameMode("unlimited")
   );
 }
 
