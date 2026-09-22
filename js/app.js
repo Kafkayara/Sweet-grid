@@ -1293,10 +1293,12 @@ function determineSpecialCreates(
     ) {
 
       const position =
-        chooseSpecialPosition(
-          group,
-          swapFirst,
-          swapSecond
+        parsePosition(
+          chooseSpecialPosition(
+            group,
+            swapFirst,
+            swapSecond
+          )
         );
 
       const candy =
@@ -1325,10 +1327,12 @@ function determineSpecialCreates(
     ) {
 
       const position =
-        chooseSpecialPosition(
-          group,
-          swapFirst,
-          swapSecond
+        parsePosition(
+          chooseSpecialPosition(
+            group,
+            swapFirst,
+            swapSecond
+          )
         );
 
       creates.push({
@@ -1350,10 +1354,12 @@ function determineSpecialCreates(
     ) {
 
       const position =
-        chooseSpecialPosition(
-          group,
-          swapFirst,
-          swapSecond
+        parsePosition(
+          chooseSpecialPosition(
+            group,
+            swapFirst,
+            swapSecond
+          )
         );
 
       creates.push({
