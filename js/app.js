@@ -18,7 +18,15 @@ const SCORE_PER_CANDY = 10;
 
 const SWAP_DELAY = 120;
 const POP_DELAY = 220;
-const FALL_DELAY = 150;
+const FALL_DELAY = 420;
+
+/*
+  Jumlah baris ekstra yang ditambahkan ke jarak
+  jatuh permen BARU (bukan yang cuma bergeser
+  turun), supaya terlihat jatuh dari jauh di atas
+  papan, bukan dari tepat di atas kotaknya sendiri.
+*/
+const NEW_CANDY_DROP_BUFFER = 3;
 
 const HINT_DELAY = 5000;
 
@@ -61,6 +69,9 @@ const modeTargetButton =
 
 const modeUnlimitedButton =
   document.getElementById("modeUnlimitedBtn");
+
+const particleLayer =
+  document.getElementById("particleLayer");
 
 
 /* =========================================
@@ -264,9 +275,13 @@ function createsStartingMatch(row, column, type) {
    RENDER BOARD
 ========================================= */
 
-function renderBoard() {
+function renderBoard(
+  fallOffsets = null
+) {
 
   boardElement.innerHTML = "";
+
+  const fallingCandies = [];
 
   for (
     let row = 0;
@@ -337,6 +352,24 @@ function renderBoard() {
             "candy-wrapped"
           );
         }
+
+
+        /*
+          Animasi "lahir" untuk permen spesial
+          yang baru saja terbentuk. Flag ini
+          dikonsumsi (dihapus) di sini supaya
+          animasinya hanya main SEKALI, bukan
+          setiap kali papan dirender ulang.
+        */
+
+        if (candyData.justCreated) {
+
+          candy.classList.add(
+            "special-born"
+          );
+
+          delete candyData.justCreated;
+        }
       }
 
 
@@ -395,11 +428,112 @@ function renderBoard() {
 
 
       boardElement.appendChild(candy);
+
+
+      if (
+        fallOffsets &&
+        fallOffsets[row][column] > 0
+      ) {
+
+        fallingCandies.push({
+          element: candy,
+          distance: fallOffsets[row][column]
+        });
+      }
     }
   }
 
 
   updateUI();
+
+
+  if (fallingCandies.length > 0) {
+
+    applyFallAnimation(
+      fallingCandies
+    );
+  }
+}
+
+
+/* =========================================
+   FALL ANIMATION
+========================================= */
+
+/*
+  Menganimasikan permen supaya terlihat jatuh
+  dari atas, bukan langsung "melompat" ke posisi
+  akhirnya. distance dihitung dalam satuan baris
+  oleh computeFallOffsets().
+*/
+
+function applyFallAnimation(
+  fallingCandies
+) {
+
+  const sample =
+    boardElement.children[0];
+
+  if (!sample) {
+    return;
+  }
+
+  const cellHeight =
+    sample.getBoundingClientRect().height;
+
+  const gapPx =
+    parseFloat(
+      getComputedStyle(
+        boardElement
+      ).getPropertyValue("--gap")
+    ) || 0;
+
+  const rowPitch =
+    cellHeight + gapPx;
+
+
+  for (
+    const { element, distance } of fallingCandies
+  ) {
+
+    element.style.transition = "none";
+
+    element.style.transform =
+      `translateY(${-distance * rowPitch}px)`;
+  }
+
+
+  /*
+    Paksa reflow supaya browser benar-benar
+    mencatat posisi awal (tertranslasi ke atas)
+    sebelum transisi ke posisi akhir dijalankan.
+  */
+
+  void boardElement.offsetHeight;
+
+
+  requestAnimationFrame(() => {
+
+    requestAnimationFrame(() => {
+
+      for (
+        const { element, distance } of fallingCandies
+      ) {
+
+        const duration =
+          Math.min(
+            0.22 + distance * 0.02,
+            0.5
+          );
+
+        element.style.transition =
+          `transform ${duration}s cubic-bezier(0.22, 0.61, 0.36, 1)`;
+
+        element.style.transform =
+          "translateY(0)";
+      }
+    });
+  });
 }
 
 
@@ -924,7 +1058,6 @@ function sameCandyType(
 function findMatchGroups() {
 
   const groups = [];
-
   const visited = new Set();
 
   for (
@@ -945,8 +1078,7 @@ function findMatchGroups() {
         continue;
       }
 
-      const candy =
-        board[row][column];
+      const candy = board[row][column];
 
       if (
         !candy ||
@@ -955,51 +1087,197 @@ function findMatchGroups() {
         continue;
       }
 
-
-      const horizontal =
-        getHorizontalRun(
-          row,
-          column
-        );
-
-      const vertical =
-        getVerticalRun(
-          row,
-          column
-        );
-
+      /*
+        Cek dulu apakah sel ini benar-benar
+        bagian dari SUATU match (punya run >=3),
+        sebelum menelusuri komponennya. Ini
+        mencegah candy biasa yang kebetulan
+        bertetangga ikut ke dalam grup.
+      */
 
       if (
-        horizontal.length < 3 &&
-        vertical.length < 3
+        getHorizontalRun(row, column).length < 3 &&
+        getVerticalRun(row, column).length < 3
       ) {
-
         continue;
       }
 
 
-      const cells =
-        new Set([
-          ...horizontal,
-          ...vertical
-        ]);
+      /*
+        Flood-fill: kumpulkan semua sel bertipe
+        sama yang terhubung (4 arah) DAN masing-
+        masing juga bagian dari suatu run >=3.
+        Ini membuat bentuk T/L tetap jadi SATU
+        grup, bukan terpecah berdasarkan urutan
+        pemindaian sel per sel.
+      */
+
+      const componentCells = new Set();
+      const stack = [key];
+
+      while (stack.length > 0) {
+
+        const currentKey = stack.pop();
+
+        if (componentCells.has(currentKey)) {
+          continue;
+        }
+
+        const [r, c] =
+          currentKey
+            .split(",")
+            .map(Number);
+
+        const currentCandy =
+          board[r]?.[c];
+
+        if (
+          !currentCandy ||
+          !sameCandyType(currentCandy, candy)
+        ) {
+          continue;
+        }
+
+        const isPartOfRun =
+          getHorizontalRun(r, c).length >= 3 ||
+          getVerticalRun(r, c).length >= 3;
+
+        if (!isPartOfRun) {
+          continue;
+        }
+
+        componentCells.add(currentKey);
+
+        stack.push(
+          `${r - 1},${c}`,
+          `${r + 1},${c}`,
+          `${r},${c - 1}`,
+          `${r},${c + 1}`
+        );
+      }
+
+      for (const cellKey of componentCells) {
+        visited.add(cellKey);
+      }
 
 
-      for (const position of cells) {
-        visited.add(position);
+      /*
+        Run horizontal & vertikal TERPANJANG di
+        dalam komponen ini (bukan cuma dari satu
+        titik awal), supaya bentuk T/L terdeteksi
+        benar sebagai satu kesatuan.
+      */
+
+      const columnsByRow = new Map();
+      const rowsByColumn = new Map();
+
+      for (const cellKey of componentCells) {
+
+        const [r, c] =
+          cellKey
+            .split(",")
+            .map(Number);
+
+        if (!columnsByRow.has(r)) {
+          columnsByRow.set(r, []);
+        }
+
+        columnsByRow.get(r).push(c);
+
+        if (!rowsByColumn.has(c)) {
+          rowsByColumn.set(c, []);
+        }
+
+        rowsByColumn.get(c).push(r);
+      }
+
+      let bestHorizontal = [];
+
+      for (const [r, columns] of columnsByRow) {
+
+        const run =
+          longestConsecutiveRun(columns);
+
+        if (run.length > bestHorizontal.length) {
+
+          bestHorizontal =
+            run.map(c => `${r},${c}`);
+        }
+      }
+
+      let bestVertical = [];
+
+      for (const [c, rows] of rowsByColumn) {
+
+        const run =
+          longestConsecutiveRun(rows);
+
+        if (run.length > bestVertical.length) {
+
+          bestVertical =
+            run.map(r => `${r},${c}`);
+        }
       }
 
 
       groups.push({
-        cells,
-        horizontal,
-        vertical,
+        cells: componentCells,
+        horizontal: bestHorizontal,
+        vertical: bestVertical,
         type: candy.type
       });
     }
   }
 
   return groups;
+}
+
+
+/* =========================================
+   LONGEST CONSECUTIVE RUN
+========================================= */
+
+/*
+  Dari daftar angka (baris atau kolom), cari
+  urutan berurutan (selisih 1) terpanjang.
+  Dipakai untuk menemukan run horizontal/
+  vertikal terpanjang di dalam satu komponen.
+*/
+
+function longestConsecutiveRun(numbers) {
+
+  const sorted =
+    [...numbers].sort((a, b) => a - b);
+
+  let best = [];
+  let current = [];
+
+  for (const number of sorted) {
+
+    const previous =
+      current[current.length - 1];
+
+    if (
+      current.length === 0 ||
+      number === previous + 1
+    ) {
+
+      current.push(number);
+    } else {
+
+      if (current.length > best.length) {
+        best = current;
+      }
+
+      current = [number];
+    }
+  }
+
+  if (current.length > best.length) {
+    best = current;
+  }
+
+  return best;
 }
 
 
@@ -1239,11 +1517,15 @@ async function resolveMatches(
     );
 
 
+    const fallOffsets =
+      computeFallOffsets();
+
+
     collapseBoard();
 
     fillEmptySpaces();
 
-    renderBoard();
+    renderBoard(fallOffsets);
 
     await wait(FALL_DELAY);
 
@@ -1279,30 +1561,15 @@ function determineSpecialCreates(
 
 
     /* =====================================
-       5+ MATCH → COLOR BOMB
-    ===================================== */
-
-    if (size >= 5) {
-
-      const position =
-        chooseSpecialPosition(
-          group,
-          swapFirst,
-          swapSecond
-        );
-
-      creates.push({
-        ...parsePosition(position),
-        special: "color-bomb",
-        type: null
-      });
-
-      continue;
-    }
-
-
-    /* =====================================
        T / L → WRAPPED
+
+       Dicek SEBELUM size>=5, karena bentuk
+       T/L minimal selalu berjumlah 5 sel
+       (3 + 3 dikurangi 1 sel siku yang
+       dipakai bersama). Kalau size>=5 dicek
+       duluan, L/T akan selalu "dibajak" jadi
+       color bomb dan wrapped tidak akan
+       pernah muncul.
     ===================================== */
 
     if (
@@ -1330,6 +1597,29 @@ function determineSpecialCreates(
         ...position,
         special: "wrapped",
         type: candy?.type ?? group.type
+      });
+
+      continue;
+    }
+
+
+    /* =====================================
+       5+ MATCH LURUS → COLOR BOMB
+    ===================================== */
+
+    if (size >= 5) {
+
+      const position =
+        chooseSpecialPosition(
+          group,
+          swapFirst,
+          swapSecond
+        );
+
+      creates.push({
+        ...parsePosition(position),
+        special: "color-bomb",
+        type: null
       });
 
       continue;
@@ -1489,7 +1779,8 @@ function createSpecialCandies(
       special.column
     ] = {
       type: special.type,
-      special: special.special
+      special: special.special,
+      justCreated: true
     };
   }
 }
@@ -2128,11 +2419,15 @@ async function resolveSpecialCombination(
   }
 
 
+  const fallOffsets =
+    computeFallOffsets();
+
+
   collapseBoard();
 
   fillEmptySpaces();
 
-  renderBoard();
+  renderBoard(fallOffsets);
 
   await wait(FALL_DELAY);
 
@@ -2154,6 +2449,290 @@ async function resolveSpecialCombination(
       matches
     );
   }
+}
+
+
+/* =========================================
+   POP EFFECTS (KILAUAN & PECAHAN)
+========================================= */
+
+const SHARD_COLORS = [
+  "var(--red)",
+  "var(--blue)",
+  "var(--yellow-candy)",
+  "var(--green)",
+  "var(--purple)",
+  "var(--pink)"
+];
+
+
+function prefersReducedMotion() {
+
+  return Boolean(
+    window.matchMedia &&
+    window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches
+  );
+}
+
+
+function spawnPopEffect(
+  candyElement,
+  candyData
+) {
+
+  if (
+    !particleLayer ||
+    prefersReducedMotion()
+  ) {
+
+    return;
+  }
+
+
+  const candyRect =
+    candyElement.getBoundingClientRect();
+
+  const layerRect =
+    particleLayer.getBoundingClientRect();
+
+  const centerX =
+    candyRect.left +
+    candyRect.width / 2 -
+    layerRect.left;
+
+  const centerY =
+    candyRect.top +
+    candyRect.height / 2 -
+    layerRect.top;
+
+  const special =
+    candyData?.special ?? null;
+
+  const color =
+    special === "color-bomb"
+      ? null
+      : SHARD_COLORS[
+          candyData?.type ?? 0
+        ] ?? "#ffffff";
+
+
+  /*
+    Ledakan dasar (pecahan + kilauan) tetap
+    dipakai untuk semua jenis permen, termasuk
+    spesial. Color bomb dapat porsi lebih besar
+    dan warna berganti-ganti (pelangi).
+  */
+
+  const isColorBomb =
+    special === "color-bomb";
+
+  const shardCount =
+    isColorBomb ? 10 : 5;
+
+  const sparkCount =
+    isColorBomb ? 8 : 4;
+
+  const burstRadius =
+    isColorBomb ? 34 : 22;
+
+
+  for (
+    let i = 0;
+    i < shardCount;
+    i++
+  ) {
+
+    const angle =
+      (Math.PI * 2 * i) / shardCount +
+      Math.random() * 0.6;
+
+    const distance =
+      burstRadius + Math.random() * 14;
+
+    const shardColor =
+      color ??
+      SHARD_COLORS[i % SHARD_COLORS.length];
+
+    spawnParticle(
+      "shard",
+      centerX,
+      centerY,
+      Math.cos(angle) * distance,
+      Math.sin(angle) * distance,
+      { background: shardColor },
+      500,
+      Math.round(
+        Math.random() * 280 - 140
+      )
+    );
+  }
+
+
+  for (
+    let i = 0;
+    i < sparkCount;
+    i++
+  ) {
+
+    const angle =
+      Math.random() * Math.PI * 2;
+
+    const distance =
+      16 + Math.random() * 18;
+
+    spawnParticle(
+      "spark",
+      centerX,
+      centerY,
+      Math.cos(angle) * distance,
+      Math.sin(angle) * distance,
+      null,
+      450
+    );
+  }
+
+
+  /*
+    Efek tambahan khusus per jenis permen spesial.
+  */
+
+  if (special === "wrapped") {
+
+    spawnShockwave(centerX, centerY);
+  }
+
+
+  if (
+    special === "striped-horizontal" ||
+    special === "striped-vertical"
+  ) {
+
+    spawnStreak(
+      special === "striped-horizontal"
+        ? "horizontal"
+        : "vertical",
+      centerX,
+      centerY
+    );
+  }
+}
+
+
+/* =========================================
+   SHOCKWAVE (WRAPPED)
+========================================= */
+
+function spawnShockwave(
+  x,
+  y
+) {
+
+  const ring =
+    document.createElement("span");
+
+  ring.className = "shockwave";
+
+  ring.style.left = `${x}px`;
+  ring.style.top = `${y}px`;
+
+  particleLayer.appendChild(ring);
+
+  setTimeout(
+    () => ring.remove(),
+    500
+  );
+}
+
+
+/* =========================================
+   STREAK (STRIPED)
+========================================= */
+
+function spawnStreak(
+  direction,
+  x,
+  y
+) {
+
+  const streak =
+    document.createElement("span");
+
+  streak.className =
+    direction === "horizontal"
+      ? "streak streak-horizontal"
+      : "streak streak-vertical";
+
+  if (direction === "horizontal") {
+
+    streak.style.top = `${y}px`;
+
+  } else {
+
+    streak.style.left = `${x}px`;
+  }
+
+  particleLayer.appendChild(streak);
+
+  setTimeout(
+    () => streak.remove(),
+    380
+  );
+}
+
+
+function spawnParticle(
+  className,
+  x,
+  y,
+  tx,
+  ty,
+  extraStyle,
+  lifespan,
+  rotationDeg
+) {
+
+  const particle =
+    document.createElement("span");
+
+  particle.className = className;
+
+  particle.style.left = `${x}px`;
+  particle.style.top = `${y}px`;
+
+  particle.style.setProperty(
+    "--tx",
+    `${tx}px`
+  );
+
+  particle.style.setProperty(
+    "--ty",
+    `${ty}px`
+  );
+
+  if (rotationDeg !== undefined) {
+
+    particle.style.setProperty(
+      "--rot",
+      `${rotationDeg}deg`
+    );
+  }
+
+  if (extraStyle) {
+
+    Object.assign(
+      particle.style,
+      extraStyle
+    );
+  }
+
+  particleLayer.appendChild(particle);
+
+  setTimeout(
+    () => particle.remove(),
+    lifespan
+  );
 }
 
 
@@ -2187,8 +2766,127 @@ function animateMatches(
       candy.classList.add(
         "pop"
       );
+
+      spawnPopEffect(
+        candy,
+        board[row][column]
+      );
     }
   }
+}
+
+
+/* =========================================
+   COMPUTE FALL OFFSETS
+========================================= */
+
+/*
+  Dipanggil TEPAT SEBELUM collapseBoard(), saat
+  papan masih berisi null persis di sel-sel yang
+  baru saja meledak. Untuk tiap kolom, menghitung
+  berapa baris tiap permen akan "jatuh" secara
+  visual:
+    - Permen yang bertahan jatuh sejauh jumlah sel
+      kosong yang ada DI ATAS posisi aslinya.
+    - Permen baru (pengisi slot kosong di bagian
+      atas) dianggap jatuh dari atas board, makin
+      ke atas makin jauh jatuhnya supaya terlihat
+      seperti masuk berurutan.
+*/
+
+function computeFallOffsets() {
+
+  const offsets = [];
+
+  for (
+    let row = 0;
+    row < BOARD_SIZE;
+    row++
+  ) {
+
+    offsets.push(
+      new Array(BOARD_SIZE).fill(0)
+    );
+  }
+
+
+  for (
+    let column = 0;
+    column < BOARD_SIZE;
+    column++
+  ) {
+
+    const removedRows = [];
+    const survivorRows = [];
+
+    for (
+      let row = 0;
+      row < BOARD_SIZE;
+      row++
+    ) {
+
+      if (board[row][column] === null) {
+        removedRows.push(row);
+      } else {
+        survivorRows.push(row);
+      }
+    }
+
+
+    const emptyCount =
+      removedRows.length;
+
+    if (emptyCount === 0) {
+      continue;
+    }
+
+
+    for (
+      let i = 0;
+      i < survivorRows.length;
+      i++
+    ) {
+
+      const originalRow =
+        survivorRows[i];
+
+      const finalRow =
+        emptyCount + i;
+
+      let shift = 0;
+
+      for (const removedRow of removedRows) {
+
+        if (removedRow < originalRow) {
+          shift++;
+        }
+      }
+
+      offsets[finalRow][column] = shift;
+    }
+
+
+    /*
+      Permen baru diberi jarak ekstra
+      (NEW_CANDY_DROP_BUFFER) supaya terlihat
+      jatuh dari jauh di atas papan, bukan cuma
+      "mengintip" sedikit di atas kotaknya sendiri.
+    */
+
+    for (
+      let finalRow = 0;
+      finalRow < emptyCount;
+      finalRow++
+    ) {
+
+      offsets[finalRow][column] =
+        (emptyCount - finalRow) +
+        NEW_CANDY_DROP_BUFFER;
+    }
+  }
+
+
+  return offsets;
 }
 
 
