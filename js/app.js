@@ -16,7 +16,6 @@ const TARGET_SCORE = 1000;
 
 const SCORE_PER_CANDY = 10;
 
-const SWAP_DELAY = 120;
 const POP_DELAY = 220;
 const FALL_DELAY = 420;
 
@@ -538,6 +537,134 @@ function applyFallAnimation(
 
 
 /* =========================================
+   SWAP ANIMATION
+========================================= */
+
+/*
+  Membuat kedua permen yang ditukar terlihat
+  MELUNCUR ke posisi barunya (gaya Candy Crush),
+  bukan langsung berpindah instan. Dipanggil
+  SETELAH board dan DOM sudah diperbarui ke
+  posisi akhir; fungsi ini hanya mengoreksi
+  titik AWAL animasinya secara visual, lalu
+  meluncurkannya ke posisi (0,0) yang sebenarnya.
+
+  Mengembalikan Promise yang selesai saat
+  animasi meluncur sudah berakhir.
+*/
+
+function animateSwapPositions(
+  first,
+  second
+) {
+
+  const sample =
+    boardElement.children[0];
+
+  if (!sample) {
+    return Promise.resolve();
+  }
+
+  const cellRect =
+    sample.getBoundingClientRect();
+
+  const gapPx =
+    parseFloat(
+      getComputedStyle(
+        boardElement
+      ).getPropertyValue("--gap")
+    ) || 0;
+
+  const colPitch =
+    cellRect.width + gapPx;
+
+  const rowPitch =
+    cellRect.height + gapPx;
+
+
+  const rowDelta =
+    second.row - first.row;
+
+  const colDelta =
+    second.column - first.column;
+
+
+  const firstIndex =
+    first.row * BOARD_SIZE +
+    first.column;
+
+  const secondIndex =
+    second.row * BOARD_SIZE +
+    second.column;
+
+  const firstElement =
+    boardElement.children[firstIndex];
+
+  const secondElement =
+    boardElement.children[secondIndex];
+
+  if (
+    !firstElement ||
+    !secondElement
+  ) {
+
+    return Promise.resolve();
+  }
+
+
+  /*
+    Board & DOM sekarang sudah di posisi AKHIR
+    (sudah ditukar). Supaya terlihat meluncur,
+    kedua elemen ini digeser dulu secara visual
+    ke posisi ASAL-nya (kebalikan dari arah
+    tukarnya), lalu dianimasikan kembali ke 0,0.
+  */
+
+  firstElement.style.transition = "none";
+
+  firstElement.style.transform =
+    `translate(${colDelta * colPitch}px, ${rowDelta * rowPitch}px)`;
+
+  secondElement.style.transition = "none";
+
+  secondElement.style.transform =
+    `translate(${-colDelta * colPitch}px, ${-rowDelta * rowPitch}px)`;
+
+
+  void boardElement.offsetHeight;
+
+
+  const duration = 0.16;
+
+  return new Promise(resolve => {
+
+    requestAnimationFrame(() => {
+
+      requestAnimationFrame(() => {
+
+        firstElement.style.transition =
+          `transform ${duration}s ease-in-out`;
+
+        firstElement.style.transform =
+          "translate(0, 0)";
+
+        secondElement.style.transition =
+          `transform ${duration}s ease-in-out`;
+
+        secondElement.style.transform =
+          "translate(0, 0)";
+
+        setTimeout(
+          resolve,
+          duration * 1000
+        );
+      });
+    });
+  });
+}
+
+
+/* =========================================
    CANDY ACCESSIBILITY LABEL
 ========================================= */
 
@@ -747,7 +874,10 @@ async function performMove(
 
   renderBoard();
 
-  await wait(SWAP_DELAY);
+  await animateSwapPositions(
+    first,
+    second
+  );
 
 
   /*
@@ -794,6 +924,11 @@ async function performMove(
     swapCandies(first, second);
 
     renderBoard();
+
+    await animateSwapPositions(
+      first,
+      second
+    );
 
     setMessage(
       "Swap itu tidak menghasilkan match."
@@ -1482,6 +1617,11 @@ async function resolveMatches(
         ? `COMBO x${combo}`
         : `Match! +${gained}`
     );
+
+    if (combo > 1) {
+
+      showComboPopup(combo);
+    }
 
 
     /* Animate */
@@ -2464,6 +2604,51 @@ const SHARD_COLORS = [
   "var(--purple)",
   "var(--pink)"
 ];
+
+
+/* =========================================
+   COMBO POPUP
+========================================= */
+
+const COMBO_LABELS = {
+  2: "Manis!",
+  3: "Lezat!",
+  4: "Luar Biasa!"
+};
+
+const COMBO_LABEL_MAX = "Fantastis!";
+
+
+function showComboPopup(
+  combo
+) {
+
+  if (
+    !particleLayer ||
+    prefersReducedMotion()
+  ) {
+
+    return;
+  }
+
+  const label =
+    COMBO_LABELS[combo] ??
+    COMBO_LABEL_MAX;
+
+  const popup =
+    document.createElement("span");
+
+  popup.className = "combo-popup";
+
+  popup.textContent = label;
+
+  particleLayer.appendChild(popup);
+
+  setTimeout(
+    () => popup.remove(),
+    700
+  );
+}
 
 
 function prefersReducedMotion() {
