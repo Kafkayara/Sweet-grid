@@ -1,13 +1,3 @@
-/* =========================================
-   SWEET GRID
-   Premium Match-3 Interface
-========================================= */
-
-
-/* =========================================
-   ROOT
-========================================= */
-
 :root {
   --background: #0d0f14;
   --background-soft: #12151c;
@@ -42,11 +32,6 @@
   --shadow:
     0 24px 70px rgba(0, 0, 0, 0.38);
 }
-
-
-/* =========================================
-   RESET
-========================================= */
 
 * {
   box-sizing: border-box;
@@ -89,19 +74,9 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-
-/* =========================================
-   BUTTON RESET
-========================================= */
-
 button {
   font: inherit;
 }
-
-
-/* =========================================
-   MAIN GAME
-========================================= */
 
 .game {
   position: relative;
@@ -115,11 +90,6 @@ button {
 
   isolation: isolate;
 }
-
-
-/* =========================================
-   HEADER
-========================================= */
 
 .header {
   display: flex;
@@ -158,22 +128,12 @@ h1 {
   letter-spacing: -0.055em;
 }
 
-
-/* =========================================
-   HEADER ACTIONS
-========================================= */
-
 .header-actions {
   display: flex;
   align-items: center;
 
   margin-left: 16px;
 }
-
-
-/* =========================================
-   RESTART BUTTON
-========================================= */
 
 .restart-btn {
   display: grid;
@@ -235,11 +195,6 @@ h1 {
   outline-offset: 3px;
 }
 
-
-/* =========================================
-   STATS
-========================================= */
-
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -296,17 +251,9 @@ h1 {
   letter-spacing: -0.03em;
 }
 
-
-/* Score emphasis */
-
 .stat-score strong {
   color: var(--yellow);
 }
-
-
-/* =========================================
-   MODE SELECT
-========================================= */
 
 .mode-select {
   display: grid;
@@ -368,19 +315,9 @@ h1 {
   outline-offset: 2px;
 }
 
-
-/* =========================================
-   GAME AREA
-========================================= */
-
 .game-area {
   position: relative;
 }
-
-
-/* =========================================
-   BOARD CONTAINER
-========================================= */
 
 .board-container {
   position: relative;
@@ -404,9 +341,6 @@ h1 {
   overflow: hidden;
 }
 
-
-/* Subtle inner frame */
-
 .board-container::before {
   content: "";
 
@@ -421,11 +355,6 @@ h1 {
     inset 0 0 0 1px rgba(255, 255, 255, 0.015);
 }
 
-
-/* =========================================
-   BOARD
-========================================= */
-
 .board {
   display: grid;
 
@@ -439,18 +368,6 @@ h1 {
 
   user-select: none;
 }
-
-
-/* =========================================
-   PARTICLE LAYER
-========================================= */
-
-/*
-  Wadah untuk efek kilauan (spark) dan pecahan
-  (shard) saat permen meledak. Ditumpuk di atas
-  .board tapi tidak mengganggu klik (pointer-events: none),
-  dan dibiarkan mengikuti bentuk membulat board-container.
-*/
 
 .particle-layer {
   position: absolute;
@@ -552,10 +469,30 @@ h1 {
   }
 }
 
+.board-flash {
+  position: absolute;
+  inset: 0;
 
-/* =========================================
-   SHOCKWAVE (wrapped meledak)
-========================================= */
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.85),
+      rgba(255, 255, 255, 0) 70%
+    );
+
+  animation: boardFlashFade 0.5s ease-out forwards;
+}
+
+@keyframes boardFlashFade {
+
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
 
 .shockwave {
   position: absolute;
@@ -583,11 +520,6 @@ h1 {
   }
 }
 
-
-/* =========================================
-   STREAK (striped meledak)
-========================================= */
-
 .streak {
   position: absolute;
 }
@@ -596,40 +528,44 @@ h1 {
   left: 0;
   right: 0;
 
-  height: 6px;
+  height: 10px;
 
   background:
     linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.9) 45%,
-      rgba(255, 255, 255, 0.9) 55%,
+      rgba(255, 255, 255, 0.95) 45%,
+      rgba(255, 255, 255, 0.95) 55%,
       transparent
     );
 
+  box-shadow: 0 0 18px 4px rgba(255, 255, 255, 0.7);
+
   transform: translateY(-50%) scaleX(0);
 
-  animation: streakFlashH 0.38s ease-out forwards;
+  animation: streakFlashH 0.4s ease-out forwards;
 }
 
 .streak-vertical {
   top: 0;
   bottom: 0;
 
-  width: 6px;
+  width: 10px;
 
   background:
     linear-gradient(
       180deg,
       transparent,
-      rgba(255, 255, 255, 0.9) 45%,
-      rgba(255, 255, 255, 0.9) 55%,
+      rgba(255, 255, 255, 0.95) 45%,
+      rgba(255, 255, 255, 0.95) 55%,
       transparent
     );
 
+  box-shadow: 0 0 18px 4px rgba(255, 255, 255, 0.7);
+
   transform: translateX(-50%) scaleY(0);
 
-  animation: streakFlashV 0.38s ease-out forwards;
+  animation: streakFlashV 0.4s ease-out forwards;
 }
 
 @keyframes streakFlashH {
@@ -668,10 +604,41 @@ h1 {
   }
 }
 
+.score-popup {
+  position: absolute;
 
-/* =========================================
-   COMBO POPUP
-========================================= */
+  transform: translate(-50%, -50%);
+
+  font-size: 15px;
+  font-weight: 800;
+
+  color: var(--yellow);
+
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.5);
+
+  white-space: nowrap;
+
+  animation: scorePopFloat 0.65s ease-out forwards;
+}
+
+@keyframes scorePopFloat {
+
+  0% {
+    transform: translate(-50%, -50%) scale(0.7);
+    opacity: 0;
+  }
+
+  20% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -120%) scale(1);
+    opacity: 0;
+  }
+}
 
 .combo-popup {
   position: absolute;
@@ -719,25 +686,9 @@ h1 {
   }
 }
 
-
-/* =========================================
-   SPECIAL BIRTH (saat permen spesial baru lahir)
-========================================= */
-
 .candy.special-born {
   animation: specialBirth 0.45s ease-out;
 }
-
-/*
-  Color bomb sudah punya animasi bombGlow yang
-  jalan terus-menerus (lihat bagian SPECIAL
-  CANDIES). Karena "animation" adalah shorthand,
-  dua selector terpisah dengan spesifisitas sama
-  akan SALING MENIMPA, bukan digabung — jadi kalau
-  color bomb kebetulan juga baru lahir, perlu
-  selector gabungan ini supaya kedua animasi
-  tetap jalan bersamaan.
-*/
 
 .candy.candy-color-bomb.special-born {
   animation:
@@ -755,21 +706,6 @@ h1 {
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
   }
 }
-
-
-/* =========================================
-   PARTICLE LAYER
-========================================= */
-
-/*
-  Sibling dari #board, bukan anak dari #board,
-  supaya tidak ikut terhapus setiap renderBoard()
-  memanggil boardElement.innerHTML = "".
-
-  inset: 10px menyamai padding .board-container,
-  jadi koordinat (0,0) lapisan ini persis berimpit
-  dengan (0,0) milik #board.
-*/
 
 .particle-layer {
   position: absolute;
@@ -791,9 +727,6 @@ h1 {
 
   will-change: transform, opacity;
 }
-
-
-/* Pecahan kecil yang terlempar dan berputar */
 
 .particle-shard {
   width: 7px;
@@ -833,9 +766,6 @@ h1 {
   }
 
 }
-
-
-/* Kilauan bulat yang membesar sekilas lalu memudar */
 
 .particle-spark {
   width: 12px;
@@ -877,11 +807,6 @@ h1 {
 
 }
 
-
-/* =========================================
-   CANDY
-========================================= */
-
 .candy {
   position: relative;
 
@@ -910,9 +835,6 @@ h1 {
   -webkit-tap-highlight-color: transparent;
 }
 
-
-/* Candy highlight */
-
 .candy::after {
   content: "";
 
@@ -933,9 +855,6 @@ h1 {
   pointer-events: none;
 }
 
-
-/* Subtle bottom reflection */
-
 .candy::before {
   content: "";
 
@@ -954,11 +873,6 @@ h1 {
   pointer-events: none;
 }
 
-
-/* =========================================
-   CANDY HOVER
-========================================= */
-
 @media (hover: hover) {
 
   .candy:hover {
@@ -974,19 +888,9 @@ h1 {
 
 }
 
-
-/* =========================================
-   CANDY ACTIVE
-========================================= */
-
 .candy:active {
   transform: scale(0.94);
 }
-
-
-/* =========================================
-   SELECTED CANDY
-========================================= */
 
 .candy.selected {
   z-index: 2;
@@ -1000,11 +904,6 @@ h1 {
     0 0 0 5px rgba(255, 255, 255, 0.08),
     0 8px 16px rgba(0, 0, 0, 0.3);
 }
-
-
-/* =========================================
-   CANDY COLORS
-========================================= */
 
 .candy-red {
   background:
@@ -1066,24 +965,6 @@ h1 {
     );
 }
 
-
-/* =========================================
-   SPECIAL CANDIES
-========================================= */
-
-/*
-  Permen spesial tetap memakai warna dasarnya
-  (.candy-red, .candy-blue, dst.), lalu diberi
-  penanda lewat ::before.
-
-  ::before pada permen biasa dipakai untuk pantulan
-  kecil di bagian bawah, jadi di sini isinya diganti
-  dengan pola khusus. Kilau ::after tetap di atasnya.
-*/
-
-
-/* Striped horizontal: garis mendatar (menghapus 1 baris) */
-
 .candy-striped-horizontal::before,
 .candy-striped-vertical::before {
   inset: 0;
@@ -1101,9 +982,6 @@ h1 {
     );
 }
 
-
-/* Striped vertical: garis tegak (menghapus 1 kolom) */
-
 .candy-striped-vertical::before {
   background:
     repeating-linear-gradient(
@@ -1112,9 +990,6 @@ h1 {
       transparent 3px 8px
     );
 }
-
-
-/* Wrapped: cincin putih dengan pita silang (ledakan 3x3) */
 
 .candy-wrapped::before {
   inset: 5px;
@@ -1140,16 +1015,6 @@ h1 {
   box-shadow:
     inset 0 0 0 2px rgba(0, 0, 0, 0.12);
 }
-
-
-/*
-  Color bomb: bola pelangi bulat.
-
-  Color bomb tidak punya kelas warna (.candy-red dst.)
-  karena type-nya null, jadi background-nya kita buat
-  sendiri. Selector ditulis .candy.candy-color-bomb
-  agar tidak kalah oleh aturan .candy pada media query.
-*/
 
 .candy.candy-color-bomb {
   border-radius: 50%;
@@ -1201,11 +1066,6 @@ h1 {
 
 }
 
-
-/* =========================================
-   HINT
-========================================= */
-
 .candy.hint {
   z-index: 1;
 
@@ -1229,10 +1089,24 @@ h1 {
 
 }
 
+.candy.candy-land {
+  animation: candyLand 0.18s ease-out;
+}
 
-/* =========================================
-   POP ANIMATION
-========================================= */
+@keyframes candyLand {
+
+  0% {
+    transform: scaleY(0.82) scaleX(1.1);
+  }
+
+  55% {
+    transform: scaleY(1.06) scaleX(0.97);
+  }
+
+  100% {
+    transform: scaleY(1) scaleX(1);
+  }
+}
 
 .candy.pop {
   animation: popCandy 0.2s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
@@ -1256,11 +1130,6 @@ h1 {
   }
 
 }
-
-
-/* =========================================
-   GAME FEEDBACK
-========================================= */
 
 .game-feedback {
   min-height: 38px;
@@ -1286,11 +1155,6 @@ h1 {
     color 0.15s ease,
     opacity 0.15s ease;
 }
-
-
-/* =========================================
-   GAME OVER OVERLAY
-========================================= */
 
 .game-overlay {
   position: fixed;
@@ -1326,11 +1190,6 @@ h1 {
   }
 
 }
-
-
-/* =========================================
-   OVERLAY CARD
-========================================= */
 
 .game-overlay-card {
   width: min(100%, 360px);
@@ -1370,7 +1229,6 @@ h1 {
 
 }
 
-
 .game-overlay-card .label {
   margin-bottom: 10px;
 }
@@ -1396,11 +1254,6 @@ h1 {
   font-size: 13px;
   line-height: 1.5;
 }
-
-
-/* =========================================
-   FINAL SCORE
-========================================= */
 
 .overlay-score {
   margin-bottom: 22px;
@@ -1429,11 +1282,6 @@ h1 {
 
   letter-spacing: -0.05em;
 }
-
-
-/* =========================================
-   OVERLAY BUTTON
-========================================= */
 
 .overlay-restart-btn {
   width: 100%;
@@ -1474,11 +1322,6 @@ h1 {
   outline-offset: 3px;
 }
 
-
-/* =========================================
-   GAME STATUS
-========================================= */
-
 .game-status {
   position: absolute;
 
@@ -1497,19 +1340,9 @@ h1 {
   border: 0;
 }
 
-
-/* =========================================
-   DISABLED / LOCKED STATE
-========================================= */
-
 .board[aria-disabled="true"] {
   pointer-events: none;
 }
-
-
-/* =========================================
-   RESPONSIVE
-========================================= */
 
 @media (max-width: 520px) {
 
@@ -1518,7 +1351,6 @@ h1 {
   }
 
 }
-
 
 @media (max-width: 400px) {
 
@@ -1563,11 +1395,6 @@ h1 {
 
 }
 
-
-/* =========================================
-   VERY SMALL SCREENS
-========================================= */
-
 @media (max-width: 340px) {
 
   .game {
@@ -1599,11 +1426,6 @@ h1 {
   }
 
 }
-
-
-/* =========================================
-   REDUCED MOTION
-========================================= */
 
 @media (prefers-reduced-motion: reduce) {
 

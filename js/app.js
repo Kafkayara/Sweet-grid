@@ -1,13 +1,3 @@
-/* =========================================
-   SWEET GRID
-   Premium Match-3 Game
-========================================= */
-
-
-/* =========================================
-   CONFIG
-========================================= */
-
 const BOARD_SIZE = 8;
 const CANDY_TYPES = 6;
 
@@ -17,22 +7,11 @@ const TARGET_SCORE = 1000;
 const SCORE_PER_CANDY = 10;
 
 const POP_DELAY = 220;
-const FALL_DELAY = 420;
+const FALL_DELAY = 480;
 
-/*
-  Jumlah baris ekstra yang ditambahkan ke jarak
-  jatuh permen BARU (bukan yang cuma bergeser
-  turun), supaya terlihat jatuh dari jauh di atas
-  papan, bukan dari tepat di atas kotaknya sendiri.
-*/
 const NEW_CANDY_DROP_BUFFER = 3;
 
 const HINT_DELAY = 5000;
-
-
-/* =========================================
-   DOM
-========================================= */
 
 const boardElement = document.getElementById("board");
 
@@ -72,11 +51,6 @@ const modeUnlimitedButton =
 const particleLayer =
   document.getElementById("particleLayer");
 
-
-/* =========================================
-   GAME STATE
-========================================= */
-
 let board = [];
 
 let score = 0;
@@ -87,22 +61,12 @@ let selectedCandy = null;
 let gameLocked = false;
 let gameOver = false;
 
-/*
-  "target"    -> menang kalau skor >= TARGET_SCORE
-  "unlimited" -> tidak ada target, main terus sampai
-                 langkah habis
-*/
 let gameMode = "target";
 
 let hintTimer = null;
 let hintClearTimer = null;
 
 let idleHintCells = [];
-
-
-/* =========================================
-   CANDY CLASSES
-========================================= */
 
 const candyClasses = [
   "candy-red",
@@ -113,36 +77,6 @@ const candyClasses = [
   "candy-pink"
 ];
 
-
-/* =========================================
-   CANDY FACTORY
-========================================= */
-
-/*
-  Candy sekarang bukan hanya angka.
-
-  Contoh candy biasa:
-
-  {
-    type: 2,
-    special: null
-  }
-
-  Special:
-
-  {
-    type: 2,
-    special: "striped-horizontal"
-  }
-
-  Color bomb:
-
-  {
-    type: null,
-    special: "color-bomb"
-  }
-*/
-
 function createCandy(type = randomCandy()) {
 
   return {
@@ -151,22 +85,12 @@ function createCandy(type = randomCandy()) {
   };
 }
 
-
-/* =========================================
-   RANDOM CANDY
-========================================= */
-
 function randomCandy() {
 
   return Math.floor(
     Math.random() * CANDY_TYPES
   );
 }
-
-
-/* =========================================
-   CLONE CANDY
-========================================= */
 
 function cloneCandy(candy) {
 
@@ -179,11 +103,6 @@ function cloneCandy(candy) {
     special: candy.special
   };
 }
-
-
-/* =========================================
-   CREATE EMPTY BOARD
-========================================= */
 
 function createEmptyBoard() {
 
@@ -200,11 +119,6 @@ function createEmptyBoard() {
     );
   }
 }
-
-
-/* =========================================
-   CREATE BOARD
-========================================= */
 
 function createBoard() {
 
@@ -249,11 +163,6 @@ function createBoard() {
   );
 }
 
-
-/* =========================================
-   STARTING MATCH CHECK
-========================================= */
-
 function createsStartingMatch(row, column, type) {
 
   const horizontalMatch =
@@ -268,11 +177,6 @@ function createsStartingMatch(row, column, type) {
 
   return horizontalMatch || verticalMatch;
 }
-
-
-/* =========================================
-   RENDER BOARD
-========================================= */
 
 function renderBoard(
   fallOffsets = null
@@ -319,9 +223,6 @@ function renderBoard(
           );
         }
 
-
-        /* Special candy styling */
-
         if (
           candyData.special ===
           "striped-horizontal"
@@ -352,15 +253,6 @@ function renderBoard(
           );
         }
 
-
-        /*
-          Animasi "lahir" untuk permen spesial
-          yang baru saja terbentuk. Flag ini
-          dikonsumsi (dihapus) di sini supaya
-          animasinya hanya main SEKALI, bukan
-          setiap kali papan dirender ulang.
-        */
-
         if (candyData.justCreated) {
 
           candy.classList.add(
@@ -371,12 +263,8 @@ function renderBoard(
         }
       }
 
-
       candy.dataset.row = row;
       candy.dataset.column = column;
-
-
-      /* Selected */
 
       if (
         selectedCandy &&
@@ -386,9 +274,6 @@ function renderBoard(
 
         candy.classList.add("selected");
       }
-
-
-      /* Hint */
 
       if (
         idleHintCells.some(
@@ -401,7 +286,6 @@ function renderBoard(
         candy.classList.add("hint");
       }
 
-
       candy.setAttribute(
         "aria-label",
         createCandyLabel(
@@ -411,12 +295,10 @@ function renderBoard(
         )
       );
 
-
       candy.setAttribute(
         "role",
         "gridcell"
       );
-
 
       candy.addEventListener(
         "click",
@@ -425,9 +307,7 @@ function renderBoard(
         }
       );
 
-
       boardElement.appendChild(candy);
-
 
       if (
         fallOffsets &&
@@ -442,9 +322,7 @@ function renderBoard(
     }
   }
 
-
   updateUI();
-
 
   if (fallingCandies.length > 0) {
 
@@ -453,18 +331,6 @@ function renderBoard(
     );
   }
 }
-
-
-/* =========================================
-   FALL ANIMATION
-========================================= */
-
-/*
-  Menganimasikan permen supaya terlihat jatuh
-  dari atas, bukan langsung "melompat" ke posisi
-  akhirnya. distance dihitung dalam satuan baris
-  oleh computeFallOffsets().
-*/
 
 function applyFallAnimation(
   fallingCandies
@@ -490,7 +356,6 @@ function applyFallAnimation(
   const rowPitch =
     cellHeight + gapPx;
 
-
   for (
     const { element, distance } of fallingCandies
   ) {
@@ -501,15 +366,7 @@ function applyFallAnimation(
       `translateY(${-distance * rowPitch}px)`;
   }
 
-
-  /*
-    Paksa reflow supaya browser benar-benar
-    mencatat posisi awal (tertranslasi ke atas)
-    sebelum transisi ke posisi akhir dijalankan.
-  */
-
   void boardElement.offsetHeight;
-
 
   requestAnimationFrame(() => {
 
@@ -521,37 +378,35 @@ function applyFallAnimation(
 
         const duration =
           Math.min(
-            0.22 + distance * 0.02,
-            0.5
+            0.24 + distance * 0.022,
+            0.52
           );
 
         element.style.transition =
-          `transform ${duration}s cubic-bezier(0.22, 0.61, 0.36, 1)`;
+          `transform ${duration}s cubic-bezier(0.55, 0.055, 0.675, 0.19)`;
 
         element.style.transform =
           "translateY(0)";
+
+        element.addEventListener(
+          "transitionend",
+          function onLand() {
+
+            element.removeEventListener(
+              "transitionend",
+              onLand
+            );
+
+            element.classList.add(
+              "candy-land"
+            );
+          },
+          { once: true }
+        );
       }
     });
   });
 }
-
-
-/* =========================================
-   SWAP ANIMATION
-========================================= */
-
-/*
-  Membuat kedua permen yang ditukar terlihat
-  MELUNCUR ke posisi barunya (gaya Candy Crush),
-  bukan langsung berpindah instan. Dipanggil
-  SETELAH board dan DOM sudah diperbarui ke
-  posisi akhir; fungsi ini hanya mengoreksi
-  titik AWAL animasinya secara visual, lalu
-  meluncurkannya ke posisi (0,0) yang sebenarnya.
-
-  Mengembalikan Promise yang selesai saat
-  animasi meluncur sudah berakhir.
-*/
 
 function animateSwapPositions(
   first,
@@ -581,13 +436,11 @@ function animateSwapPositions(
   const rowPitch =
     cellRect.height + gapPx;
 
-
   const rowDelta =
     second.row - first.row;
 
   const colDelta =
     second.column - first.column;
-
 
   const firstIndex =
     first.row * BOARD_SIZE +
@@ -611,15 +464,6 @@ function animateSwapPositions(
     return Promise.resolve();
   }
 
-
-  /*
-    Board & DOM sekarang sudah di posisi AKHIR
-    (sudah ditukar). Supaya terlihat meluncur,
-    kedua elemen ini digeser dulu secara visual
-    ke posisi ASAL-nya (kebalikan dari arah
-    tukarnya), lalu dianimasikan kembali ke 0,0.
-  */
-
   firstElement.style.transition = "none";
 
   firstElement.style.transform =
@@ -630,9 +474,7 @@ function animateSwapPositions(
   secondElement.style.transform =
     `translate(${-colDelta * colPitch}px, ${-rowDelta * rowPitch}px)`;
 
-
   void boardElement.offsetHeight;
-
 
   const duration = 0.16;
 
@@ -662,11 +504,6 @@ function animateSwapPositions(
     });
   });
 }
-
-
-/* =========================================
-   CANDY ACCESSIBILITY LABEL
-========================================= */
 
 function createCandyLabel(
   row,
@@ -706,11 +543,6 @@ function createCandyLabel(
   return position;
 }
 
-
-/* =========================================
-   UPDATE UI
-========================================= */
-
 function updateUI() {
 
   scoreElement.textContent = score;
@@ -730,11 +562,6 @@ function updateUI() {
   }
 }
 
-
-/* =========================================
-   HANDLE CLICK
-========================================= */
-
 function handleCandyClick(row, column) {
 
   if (gameLocked || gameOver) {
@@ -745,11 +572,7 @@ function handleCandyClick(row, column) {
     return;
   }
 
-
   clearHint();
-
-
-  /* First candy */
 
   if (!selectedCandy) {
 
@@ -763,9 +586,6 @@ function handleCandyClick(row, column) {
     return;
   }
 
-
-  /* Same candy */
-
   if (
     selectedCandy.row === row &&
     selectedCandy.column === column
@@ -778,14 +598,10 @@ function handleCandyClick(row, column) {
     return;
   }
 
-
   const currentCandy = {
     row,
     column
   };
-
-
-  /* Not adjacent */
 
   if (
     !isAdjacent(
@@ -802,9 +618,6 @@ function handleCandyClick(row, column) {
     return;
   }
 
-
-  /* Valid swap */
-
   performMove(
     selectedCandy,
     currentCandy
@@ -812,11 +625,6 @@ function handleCandyClick(row, column) {
 
   selectedCandy = null;
 }
-
-
-/* =========================================
-   CHECK ADJACENT
-========================================= */
 
 function isAdjacent(first, second) {
 
@@ -836,11 +644,6 @@ function isAdjacent(first, second) {
   );
 }
 
-
-/* =========================================
-   SWAP CANDIES
-========================================= */
-
 function swapCandies(first, second) {
 
   const temporary =
@@ -853,11 +656,6 @@ function swapCandies(first, second) {
     temporary;
 }
 
-
-/* =========================================
-   PERFORM MOVE
-========================================= */
-
 async function performMove(
   first,
   second
@@ -866,9 +664,6 @@ async function performMove(
   gameLocked = true;
 
   clearHint();
-
-
-  /* Swap */
 
   swapCandies(first, second);
 
@@ -879,19 +674,11 @@ async function performMove(
     second
   );
 
-
-  /*
-    Special + special combinations
-    dapat diproses walaupun tidak ada
-    match normal.
-  */
-
   const specialCombo =
     getSpecialCombination(
       first,
       second
     );
-
 
   if (specialCombo) {
 
@@ -908,16 +695,8 @@ async function performMove(
     return;
   }
 
-
-  /* Normal match check */
-
   const matches =
     findMatches();
-
-
-  /*
-    Invalid swap
-  */
 
   if (matches.size === 0) {
 
@@ -943,9 +722,6 @@ async function performMove(
     return;
   }
 
-
-  /* Valid move */
-
   moves--;
 
   await resolveMatches(
@@ -954,21 +730,14 @@ async function performMove(
     second
   );
 
-
   finishMove();
 }
-
-
-/* =========================================
-   FINISH MOVE
-========================================= */
 
 function finishMove() {
 
   selectedCandy = null;
 
   renderBoard();
-
 
   if (
     gameMode === "target" &&
@@ -980,14 +749,12 @@ function finishMove() {
     return;
   }
 
-
   if (moves <= 0) {
 
     endGame(false);
 
     return;
   }
-
 
   if (!hasPossibleMove()) {
 
@@ -1006,7 +773,6 @@ function finishMove() {
     return;
   }
 
-
   setMessage(
     "Nice! Cari kombinasi berikutnya."
   );
@@ -1016,19 +782,9 @@ function finishMove() {
   startHintTimer();
 }
 
-
-/* =========================================
-   FIND MATCHES
-========================================= */
-
 function findMatches() {
 
   const matches = new Set();
-
-
-  /* =======================================
-     HORIZONTAL
-  ======================================= */
 
   for (
     let row = 0;
@@ -1052,7 +808,6 @@ function findMatches() {
       const previous =
         board[row][start];
 
-
       if (
         column < BOARD_SIZE &&
         sameCandyType(
@@ -1064,10 +819,8 @@ function findMatches() {
         continue;
       }
 
-
       const length =
         column - start;
-
 
       if (length >= 3) {
 
@@ -1083,15 +836,9 @@ function findMatches() {
         }
       }
 
-
       start = column;
     }
   }
-
-
-  /* =======================================
-     VERTICAL
-  ======================================= */
 
   for (
     let column = 0;
@@ -1115,7 +862,6 @@ function findMatches() {
       const previous =
         board[start][column];
 
-
       if (
         row < BOARD_SIZE &&
         sameCandyType(
@@ -1127,10 +873,8 @@ function findMatches() {
         continue;
       }
 
-
       const length =
         row - start;
-
 
       if (length >= 3) {
 
@@ -1146,19 +890,12 @@ function findMatches() {
         }
       }
 
-
       start = row;
     }
   }
 
-
   return matches;
 }
-
-
-/* =========================================
-   SAME CANDY TYPE
-========================================= */
 
 function sameCandyType(
   first,
@@ -1168,11 +905,6 @@ function sameCandyType(
   if (!first || !second) {
     return false;
   }
-
-  /*
-    Color bomb tidak dianggap sebagai
-    candy biasa ketika mencari match.
-  */
 
   if (
     first.special === "color-bomb" ||
@@ -1184,11 +916,6 @@ function sameCandyType(
 
   return first.type === second.type;
 }
-
-
-/* =========================================
-   FIND MATCH GROUPS
-========================================= */
 
 function findMatchGroups() {
 
@@ -1222,30 +949,12 @@ function findMatchGroups() {
         continue;
       }
 
-      /*
-        Cek dulu apakah sel ini benar-benar
-        bagian dari SUATU match (punya run >=3),
-        sebelum menelusuri komponennya. Ini
-        mencegah candy biasa yang kebetulan
-        bertetangga ikut ke dalam grup.
-      */
-
       if (
         getHorizontalRun(row, column).length < 3 &&
         getVerticalRun(row, column).length < 3
       ) {
         continue;
       }
-
-
-      /*
-        Flood-fill: kumpulkan semua sel bertipe
-        sama yang terhubung (4 arah) DAN masing-
-        masing juga bagian dari suatu run >=3.
-        Ini membuat bentuk T/L tetap jadi SATU
-        grup, bukan terpecah berdasarkan urutan
-        pemindaian sel per sel.
-      */
 
       const componentCells = new Set();
       const stack = [key];
@@ -1294,14 +1003,6 @@ function findMatchGroups() {
       for (const cellKey of componentCells) {
         visited.add(cellKey);
       }
-
-
-      /*
-        Run horizontal & vertikal TERPANJANG di
-        dalam komponen ini (bukan cuma dari satu
-        titik awal), supaya bentuk T/L terdeteksi
-        benar sebagai satu kesatuan.
-      */
 
       const columnsByRow = new Map();
       const rowsByColumn = new Map();
@@ -1354,7 +1055,6 @@ function findMatchGroups() {
         }
       }
 
-
       groups.push({
         cells: componentCells,
         horizontal: bestHorizontal,
@@ -1366,18 +1066,6 @@ function findMatchGroups() {
 
   return groups;
 }
-
-
-/* =========================================
-   LONGEST CONSECUTIVE RUN
-========================================= */
-
-/*
-  Dari daftar angka (baris atau kolom), cari
-  urutan berurutan (selisih 1) terpanjang.
-  Dipakai untuk menemukan run horizontal/
-  vertikal terpanjang di dalam satu komponen.
-*/
 
 function longestConsecutiveRun(numbers) {
 
@@ -1415,11 +1103,6 @@ function longestConsecutiveRun(numbers) {
   return best;
 }
 
-
-/* =========================================
-   HORIZONTAL RUN
-========================================= */
-
 function getHorizontalRun(
   row,
   column
@@ -1436,7 +1119,6 @@ function getHorizontalRun(
     return [];
   }
 
-
   const result = [];
 
   let start = column;
@@ -1452,7 +1134,6 @@ function getHorizontalRun(
     start--;
   }
 
-
   let end = column;
 
   while (
@@ -1466,7 +1147,6 @@ function getHorizontalRun(
     end++;
   }
 
-
   for (
     let current = start;
     current <= end;
@@ -1478,14 +1158,8 @@ function getHorizontalRun(
     );
   }
 
-
   return result;
 }
-
-
-/* =========================================
-   VERTICAL RUN
-========================================= */
 
 function getVerticalRun(
   row,
@@ -1503,7 +1177,6 @@ function getVerticalRun(
     return [];
   }
 
-
   const result = [];
 
   let start = row;
@@ -1519,7 +1192,6 @@ function getVerticalRun(
     start--;
   }
 
-
   let end = row;
 
   while (
@@ -1533,7 +1205,6 @@ function getVerticalRun(
     end++;
   }
 
-
   for (
     let current = start;
     current <= end;
@@ -1545,14 +1216,8 @@ function getVerticalRun(
     );
   }
 
-
   return result;
 }
-
-
-/* =========================================
-   RESOLVE MATCHES
-========================================= */
 
 async function resolveMatches(
   initialMatches,
@@ -1565,17 +1230,14 @@ async function resolveMatches(
   let matches =
     initialMatches;
 
-
   while (
     matches.size > 0
   ) {
 
     combo++;
 
-
     const groups =
       findMatchGroups();
-
 
     const specialCreates =
       determineSpecialCreates(
@@ -1584,22 +1246,11 @@ async function resolveMatches(
         swapSecond
       );
 
-
-    /* Expand matches with special candy effects */
-
     const expanded =
       expandSpecialEffects(matches);
 
-
-    /*
-      Score dihitung dari expanded.size, bukan
-      matches.size, supaya permen yang ikut hancur
-      karena efek permen spesial juga dihitung.
-    */
-
     const comboMultiplier =
       1 + (combo - 1) * 0.5;
-
 
     const gained =
       Math.round(
@@ -1608,9 +1259,7 @@ async function resolveMatches(
         comboMultiplier
       );
 
-
     score += gained;
-
 
     setMessage(
       combo > 1
@@ -1623,15 +1272,14 @@ async function resolveMatches(
       showComboPopup(combo);
     }
 
-
-    /* Animate */
+    showScorePopup(
+      gained,
+      expanded
+    );
 
     animateMatches(expanded);
 
     await wait(POP_DELAY);
-
-
-    /* Remove */
 
     for (
       const position of expanded
@@ -1645,21 +1293,13 @@ async function resolveMatches(
       board[row][column] = null;
     }
 
-
-    /*
-      Create special candies after
-      removal.
-    */
-
     createSpecialCandies(
       specialCreates,
       expanded
     );
 
-
     const fallOffsets =
       computeFallOffsets();
-
 
     collapseBoard();
 
@@ -1669,16 +1309,10 @@ async function resolveMatches(
 
     await wait(FALL_DELAY);
 
-
     matches =
       findMatches();
   }
 }
-
-
-/* =========================================
-   DETERMINE SPECIAL CREATES
-========================================= */
 
 function determineSpecialCreates(
   groups,
@@ -1698,19 +1332,6 @@ function determineSpecialCreates(
 
     const hasVertical =
       group.vertical.length >= 3;
-
-
-    /* =====================================
-       T / L → WRAPPED
-
-       Dicek SEBELUM size>=5, karena bentuk
-       T/L minimal selalu berjumlah 5 sel
-       (3 + 3 dikurangi 1 sel siku yang
-       dipakai bersama). Kalau size>=5 dicek
-       duluan, L/T akan selalu "dibajak" jadi
-       color bomb dan wrapped tidak akan
-       pernah muncul.
-    ===================================== */
 
     if (
       hasHorizontal &&
@@ -1742,11 +1363,6 @@ function determineSpecialCreates(
       continue;
     }
 
-
-    /* =====================================
-       5+ MATCH LURUS → COLOR BOMB
-    ===================================== */
-
     if (size >= 5) {
 
       const position =
@@ -1764,11 +1380,6 @@ function determineSpecialCreates(
 
       continue;
     }
-
-
-    /* =====================================
-       4 HORIZONTAL
-    ===================================== */
 
     if (
       group.horizontal.length >= 4
@@ -1792,11 +1403,6 @@ function determineSpecialCreates(
       continue;
     }
 
-
-    /* =====================================
-       4 VERTICAL
-    ===================================== */
-
     if (
       group.vertical.length >= 4
     ) {
@@ -1818,14 +1424,8 @@ function determineSpecialCreates(
     }
   }
 
-
   return creates;
 }
-
-
-/* =========================================
-   CHOOSE SPECIAL POSITION
-========================================= */
 
 function chooseSpecialPosition(
   group,
@@ -1837,7 +1437,6 @@ function chooseSpecialPosition(
     swapSecond,
     swapFirst
   ];
-
 
   for (const candidate of candidates) {
 
@@ -1856,18 +1455,12 @@ function chooseSpecialPosition(
     }
   }
 
-
   return [...group.cells][
     Math.floor(
       group.cells.size / 2
     )
   ];
 }
-
-
-/* =========================================
-   PARSE POSITION
-========================================= */
 
 function parsePosition(position) {
 
@@ -1882,11 +1475,6 @@ function parsePosition(position) {
   };
 }
 
-
-/* =========================================
-   CREATE SPECIAL CANDIES
-========================================= */
-
 function createSpecialCandies(
   creates,
   removed
@@ -1899,19 +1487,12 @@ function createSpecialCandies(
     const key =
       `${special.row},${special.column}`;
 
-
-    /*
-      Jika posisi tidak lagi tersedia,
-      cari posisi yang masih kosong.
-    */
-
     if (
       !removed.has(key)
     ) {
 
       continue;
     }
-
 
     board[
       special.row
@@ -1925,11 +1506,6 @@ function createSpecialCandies(
   }
 }
 
-
-/* =========================================
-   EXPAND SPECIAL EFFECTS
-========================================= */
-
 function expandSpecialEffects(
   matches
 ) {
@@ -1939,11 +1515,9 @@ function expandSpecialEffects(
 
   let changed = true;
 
-
   while (changed) {
 
     changed = false;
-
 
     for (const position of [
       ...expanded
@@ -1955,11 +1529,9 @@ function expandSpecialEffects(
       const candy =
         board[row][column];
 
-
       if (!candy) {
         continue;
       }
-
 
       const affected =
         getSpecialAffectedCells(
@@ -1967,7 +1539,6 @@ function expandSpecialEffects(
           column,
           candy
         );
-
 
       for (
         const affectedPosition
@@ -1990,14 +1561,8 @@ function expandSpecialEffects(
     }
   }
 
-
   return expanded;
 }
-
-
-/* =========================================
-   SPECIAL AFFECTED CELLS
-========================================= */
 
 function getSpecialAffectedCells(
   row,
@@ -2006,11 +1571,6 @@ function getSpecialAffectedCells(
 ) {
 
   const cells = [];
-
-
-  /* =====================================
-     STRIPED HORIZONTAL
-  ===================================== */
 
   if (
     candy.special ===
@@ -2029,11 +1589,6 @@ function getSpecialAffectedCells(
     }
   }
 
-
-  /* =====================================
-     STRIPED VERTICAL
-  ===================================== */
-
   if (
     candy.special ===
     "striped-vertical"
@@ -2050,11 +1605,6 @@ function getSpecialAffectedCells(
       );
     }
   }
-
-
-  /* =====================================
-     WRAPPED
-  ===================================== */
 
   if (
     candy.special === "wrapped"
@@ -2078,7 +1628,6 @@ function getSpecialAffectedCells(
         const targetColumn =
           column + columnOffset;
 
-
         if (
           targetRow >= 0 &&
           targetRow < BOARD_SIZE &&
@@ -2094,14 +1643,8 @@ function getSpecialAffectedCells(
     }
   }
 
-
   return cells;
 }
-
-
-/* =========================================
-   SPECIAL COMBINATION
-========================================= */
 
 function getSpecialCombination(
   first,
@@ -2114,7 +1657,6 @@ function getSpecialCombination(
   const secondCandy =
     board[second.row][second.column];
 
-
   if (
     !firstCandy ||
     !secondCandy
@@ -2123,13 +1665,11 @@ function getSpecialCombination(
     return null;
   }
 
-
   const firstSpecial =
     firstCandy.special;
 
   const secondSpecial =
     secondCandy.special;
-
 
   if (
     firstSpecial === "color-bomb" &&
@@ -2139,7 +1679,6 @@ function getSpecialCombination(
     return "color-color";
   }
 
-
   if (
     (firstSpecial === "color-bomb" && secondSpecial === null) ||
     (secondSpecial === "color-bomb" && firstSpecial === null)
@@ -2147,7 +1686,6 @@ function getSpecialCombination(
 
     return "color-normal";
   }
-
 
   if (
     firstSpecial === "color-bomb" ||
@@ -2157,7 +1695,6 @@ function getSpecialCombination(
     return "color-special";
   }
 
-
   if (
     isStriped(firstCandy) &&
     isStriped(secondCandy)
@@ -2165,7 +1702,6 @@ function getSpecialCombination(
 
     return "striped-striped";
   }
-
 
   if (
     isStriped(firstCandy) &&
@@ -2175,7 +1711,6 @@ function getSpecialCombination(
     return "striped-wrapped";
   }
 
-
   if (
     firstSpecial === "wrapped" &&
     isStriped(secondCandy)
@@ -2183,7 +1718,6 @@ function getSpecialCombination(
 
     return "striped-wrapped";
   }
-
 
   if (
     firstSpecial === "wrapped" &&
@@ -2193,14 +1727,8 @@ function getSpecialCombination(
     return "wrapped-wrapped";
   }
 
-
   return null;
 }
-
-
-/* =========================================
-   IS STRIPED
-========================================= */
 
 function isStriped(candy) {
 
@@ -2216,11 +1744,6 @@ function isStriped(candy) {
   );
 }
 
-
-/* =========================================
-   RESOLVE SPECIAL COMBINATION
-========================================= */
-
 async function resolveSpecialCombination(
   first,
   second,
@@ -2229,11 +1752,12 @@ async function resolveSpecialCombination(
 
   const cells = new Set();
 
-
   if (
     combination ===
     "color-color"
   ) {
+
+    spawnBoardFlash();
 
     for (
       let row = 0;
@@ -2254,7 +1778,6 @@ async function resolveSpecialCombination(
     }
   }
 
-
   if (
     combination ===
     "color-normal"
@@ -2269,14 +1792,12 @@ async function resolveSpecialCombination(
         ? second
         : first;
 
-
     const targetType =
       board[
         normalPosition.row
       ][
         normalPosition.column
       ].type;
-
 
     for (
       let row = 0;
@@ -2293,7 +1814,6 @@ async function resolveSpecialCombination(
         const candy =
           board[row][column];
 
-
         if (
           candy &&
           candy.type === targetType &&
@@ -2307,9 +1827,6 @@ async function resolveSpecialCombination(
       }
     }
 
-
-    /* Color bomb-nya sendiri ikut hilang */
-
     cells.add(
       `${first.row},${first.column}`
     );
@@ -2318,7 +1835,6 @@ async function resolveSpecialCombination(
       `${second.row},${second.column}`
     );
   }
-
 
   if (
     combination ===
@@ -2334,12 +1850,10 @@ async function resolveSpecialCombination(
         ? second
         : first;
 
-
     const bombPosition =
       specialPosition === second
         ? first
         : second;
-
 
     const targetCandy =
       board[
@@ -2348,20 +1862,11 @@ async function resolveSpecialCombination(
         specialPosition.column
       ];
 
-
     const targetType =
       targetCandy.type;
 
     const targetSpecial =
       targetCandy.special;
-
-
-    /*
-      Setiap permen sejenis "berubah" menjadi
-      salinan permen spesial pasangannya, lalu
-      langsung diledakkan (bukan diundi dengan
-      Math.random()), supaya hasilnya konsisten.
-    */
 
     for (
       let row = 0;
@@ -2378,7 +1883,6 @@ async function resolveSpecialCombination(
         const candy =
           board[row][column];
 
-
         if (
           candy &&
           candy.type === targetType &&
@@ -2388,7 +1892,6 @@ async function resolveSpecialCombination(
           cells.add(
             `${row},${column}`
           );
-
 
           const affected =
             getSpecialAffectedCells(
@@ -2407,14 +1910,10 @@ async function resolveSpecialCombination(
       }
     }
 
-
-    /* Color bomb-nya sendiri ikut hilang */
-
     cells.add(
       `${bombPosition.row},${bombPosition.column}`
     );
   }
-
 
   if (
     combination ===
@@ -2445,7 +1944,6 @@ async function resolveSpecialCombination(
     }
   }
 
-
   if (
     combination ===
     "striped-wrapped"
@@ -2468,7 +1966,6 @@ async function resolveSpecialCombination(
 
         const column =
           first.column + columnOffset;
-
 
         if (
           row >= 0 &&
@@ -2496,7 +1993,6 @@ async function resolveSpecialCombination(
     }
   }
 
-
   if (
     combination ===
     "wrapped-wrapped"
@@ -2520,7 +2016,6 @@ async function resolveSpecialCombination(
         const column =
           first.column + columnOffset;
 
-
         if (
           row >= 0 &&
           row < BOARD_SIZE &&
@@ -2536,17 +2031,21 @@ async function resolveSpecialCombination(
     }
   }
 
-
-  score +=
+  const specialGained =
     cells.size *
     SCORE_PER_CANDY *
     2;
 
+  score += specialGained;
+
+  showScorePopup(
+    specialGained,
+    cells
+  );
 
   animateMatches(cells);
 
   await wait(POP_DELAY);
-
 
   for (
     const position of cells
@@ -2558,10 +2057,8 @@ async function resolveSpecialCombination(
     board[row][column] = null;
   }
 
-
   const fallOffsets =
     computeFallOffsets();
-
 
   collapseBoard();
 
@@ -2571,15 +2068,8 @@ async function resolveSpecialCombination(
 
   await wait(FALL_DELAY);
 
-
-  /*
-    Special combinations dapat
-    menghasilkan match lanjutan.
-  */
-
   const matches =
     findMatches();
-
 
   if (
     matches.size > 0
@@ -2591,11 +2081,6 @@ async function resolveSpecialCombination(
   }
 }
 
-
-/* =========================================
-   POP EFFECTS (KILAUAN & PECAHAN)
-========================================= */
-
 const SHARD_COLORS = [
   "var(--red)",
   "var(--blue)",
@@ -2605,11 +2090,6 @@ const SHARD_COLORS = [
   "var(--pink)"
 ];
 
-
-/* =========================================
-   COMBO POPUP
-========================================= */
-
 const COMBO_LABELS = {
   2: "Manis!",
   3: "Lezat!",
@@ -2617,7 +2097,6 @@ const COMBO_LABELS = {
 };
 
 const COMBO_LABEL_MAX = "Fantastis!";
-
 
 function showComboPopup(
   combo
@@ -2650,6 +2129,82 @@ function showComboPopup(
   );
 }
 
+function showScorePopup(
+  points,
+  cellsSet
+) {
+
+  if (
+    !particleLayer ||
+    prefersReducedMotion() ||
+    points <= 0
+  ) {
+
+    return;
+  }
+
+  const layerRect =
+    particleLayer.getBoundingClientRect();
+
+  let sumX = 0;
+  let sumY = 0;
+  let count = 0;
+
+  for (
+    const position of cellsSet
+  ) {
+
+    const { row, column } =
+      parsePosition(position);
+
+    const index =
+      row * BOARD_SIZE +
+      column;
+
+    const el =
+      boardElement.children[index];
+
+    if (!el) {
+      continue;
+    }
+
+    const rect =
+      el.getBoundingClientRect();
+
+    sumX +=
+      rect.left +
+      rect.width / 2 -
+      layerRect.left;
+
+    sumY +=
+      rect.top +
+      rect.height / 2 -
+      layerRect.top;
+
+    count++;
+  }
+
+  if (count === 0) {
+    return;
+  }
+
+  const popup =
+    document.createElement("span");
+
+  popup.className = "score-popup";
+
+  popup.textContent = `+${points}`;
+
+  popup.style.left = `${sumX / count}px`;
+  popup.style.top = `${sumY / count}px`;
+
+  particleLayer.appendChild(popup);
+
+  setTimeout(
+    () => popup.remove(),
+    650
+  );
+}
 
 function prefersReducedMotion() {
 
@@ -2660,7 +2215,6 @@ function prefersReducedMotion() {
     ).matches
   );
 }
-
 
 function spawnPopEffect(
   candyElement,
@@ -2674,7 +2228,6 @@ function spawnPopEffect(
 
     return;
   }
-
 
   const candyRect =
     candyElement.getBoundingClientRect();
@@ -2702,14 +2255,6 @@ function spawnPopEffect(
           candyData?.type ?? 0
         ] ?? "#ffffff";
 
-
-  /*
-    Ledakan dasar (pecahan + kilauan) tetap
-    dipakai untuk semua jenis permen, termasuk
-    spesial. Color bomb dapat porsi lebih besar
-    dan warna berganti-ganti (pelangi).
-  */
-
   const isColorBomb =
     special === "color-bomb";
 
@@ -2721,7 +2266,6 @@ function spawnPopEffect(
 
   const burstRadius =
     isColorBomb ? 34 : 22;
-
 
   for (
     let i = 0;
@@ -2754,7 +2298,6 @@ function spawnPopEffect(
     );
   }
 
-
   for (
     let i = 0;
     i < sparkCount;
@@ -2778,16 +2321,10 @@ function spawnPopEffect(
     );
   }
 
-
-  /*
-    Efek tambahan khusus per jenis permen spesial.
-  */
-
   if (special === "wrapped") {
 
     spawnShockwave(centerX, centerY);
   }
-
 
   if (
     special === "striped-horizontal" ||
@@ -2803,11 +2340,6 @@ function spawnPopEffect(
     );
   }
 }
-
-
-/* =========================================
-   SHOCKWAVE (WRAPPED)
-========================================= */
 
 function spawnShockwave(
   x,
@@ -2830,10 +2362,28 @@ function spawnShockwave(
   );
 }
 
+function spawnBoardFlash() {
 
-/* =========================================
-   STREAK (STRIPED)
-========================================= */
+  if (
+    !particleLayer ||
+    prefersReducedMotion()
+  ) {
+
+    return;
+  }
+
+  const flash =
+    document.createElement("span");
+
+  flash.className = "board-flash";
+
+  particleLayer.appendChild(flash);
+
+  setTimeout(
+    () => flash.remove(),
+    500
+  );
+}
 
 function spawnStreak(
   direction,
@@ -2865,7 +2415,6 @@ function spawnStreak(
     380
   );
 }
-
 
 function spawnParticle(
   className,
@@ -2920,11 +2469,6 @@ function spawnParticle(
   );
 }
 
-
-/* =========================================
-   ANIMATE MATCHES
-========================================= */
-
 function animateMatches(
   matches
 ) {
@@ -2936,15 +2480,12 @@ function animateMatches(
     const { row, column } =
       parsePosition(position);
 
-
     const index =
       row * BOARD_SIZE +
       column;
 
-
     const candy =
       boardElement.children[index];
-
 
     if (candy) {
 
@@ -2960,25 +2501,6 @@ function animateMatches(
   }
 }
 
-
-/* =========================================
-   COMPUTE FALL OFFSETS
-========================================= */
-
-/*
-  Dipanggil TEPAT SEBELUM collapseBoard(), saat
-  papan masih berisi null persis di sel-sel yang
-  baru saja meledak. Untuk tiap kolom, menghitung
-  berapa baris tiap permen akan "jatuh" secara
-  visual:
-    - Permen yang bertahan jatuh sejauh jumlah sel
-      kosong yang ada DI ATAS posisi aslinya.
-    - Permen baru (pengisi slot kosong di bagian
-      atas) dianggap jatuh dari atas board, makin
-      ke atas makin jauh jatuhnya supaya terlihat
-      seperti masuk berurutan.
-*/
-
 function computeFallOffsets() {
 
   const offsets = [];
@@ -2993,7 +2515,6 @@ function computeFallOffsets() {
       new Array(BOARD_SIZE).fill(0)
     );
   }
-
 
   for (
     let column = 0;
@@ -3017,14 +2538,12 @@ function computeFallOffsets() {
       }
     }
 
-
     const emptyCount =
       removedRows.length;
 
     if (emptyCount === 0) {
       continue;
     }
-
 
     for (
       let i = 0;
@@ -3050,14 +2569,6 @@ function computeFallOffsets() {
       offsets[finalRow][column] = shift;
     }
 
-
-    /*
-      Permen baru diberi jarak ekstra
-      (NEW_CANDY_DROP_BUFFER) supaya terlihat
-      jatuh dari jauh di atas papan, bukan cuma
-      "mengintip" sedikit di atas kotaknya sendiri.
-    */
-
     for (
       let finalRow = 0;
       finalRow < emptyCount;
@@ -3070,14 +2581,8 @@ function computeFallOffsets() {
     }
   }
 
-
   return offsets;
 }
-
-
-/* =========================================
-   COLLAPSE BOARD
-========================================= */
 
 function collapseBoard() {
 
@@ -3088,7 +2593,6 @@ function collapseBoard() {
   ) {
 
     const candies = [];
-
 
     for (
       let row = BOARD_SIZE - 1;
@@ -3106,7 +2610,6 @@ function collapseBoard() {
       }
     }
 
-
     for (
       let row = BOARD_SIZE - 1;
       row >= 0;
@@ -3118,17 +2621,11 @@ function collapseBoard() {
         1 -
         row;
 
-
       board[row][column] =
         candies[index] ?? null;
     }
   }
 }
-
-
-/* =========================================
-   FILL EMPTY SPACES
-========================================= */
 
 function fillEmptySpaces() {
 
@@ -3155,11 +2652,6 @@ function fillEmptySpaces() {
   }
 }
 
-
-/* =========================================
-   CHECK POSSIBLE MOVE
-========================================= */
-
 function hasPossibleMove() {
 
   for (
@@ -3174,8 +2666,6 @@ function hasPossibleMove() {
       column++
     ) {
 
-      /* Right */
-
       if (
         column + 1 < BOARD_SIZE &&
         testSwap(
@@ -3189,9 +2679,6 @@ function hasPossibleMove() {
 
         return true;
       }
-
-
-      /* Down */
 
       if (
         row + 1 < BOARD_SIZE &&
@@ -3209,26 +2696,13 @@ function hasPossibleMove() {
     }
   }
 
-
   return false;
 }
-
-
-/* =========================================
-   TEST SWAP
-========================================= */
 
 function testSwap(
   first,
   second
 ) {
-
-  /*
-    Kombinasi permen spesial (mis. color bomb
-    dengan permen biasa) adalah langkah valid
-    walaupun tidak menghasilkan match biasa,
-    jadi dicek dulu sebelum menukar papan.
-  */
 
   if (
     getSpecialCombination(
@@ -3240,30 +2714,21 @@ function testSwap(
     return true;
   }
 
-
   swapCandies(
     first,
     second
   );
-
 
   const hasMatch =
     findMatches().size > 0;
 
-
   swapCandies(
     first,
     second
   );
 
-
   return hasMatch;
 }
-
-
-/* =========================================
-   FIND A POSSIBLE MOVE
-========================================= */
 
 function findPossibleMove() {
 
@@ -3293,7 +2758,6 @@ function findPossibleMove() {
           column: column + 1
         };
 
-
         if (
           testSwap(
             first,
@@ -3308,7 +2772,6 @@ function findPossibleMove() {
         }
       }
 
-
       if (
         row + 1 < BOARD_SIZE
       ) {
@@ -3322,7 +2785,6 @@ function findPossibleMove() {
           row: row + 1,
           column
         };
-
 
         if (
           testSwap(
@@ -3340,31 +2802,21 @@ function findPossibleMove() {
     }
   }
 
-
   return null;
 }
-
-
-/* =========================================
-   SHUFFLE BOARD
-========================================= */
 
 function shuffleBoard() {
 
   const candies =
     board.flat().filter(Boolean);
 
-
   let attempts = 0;
-
 
   do {
 
     shuffleArray(candies);
 
-
     let index = 0;
-
 
     for (
       let row = 0;
@@ -3385,9 +2837,7 @@ function shuffleBoard() {
       }
     }
 
-
     attempts++;
-
 
   } while (
     (
@@ -3397,11 +2847,6 @@ function shuffleBoard() {
     attempts < 100
   );
 }
-
-
-/* =========================================
-   SHUFFLE ARRAY
-========================================= */
 
 function shuffleArray(array) {
 
@@ -3417,7 +2862,6 @@ function shuffleArray(array) {
         (index + 1)
       );
 
-
     [
       array[index],
       array[randomIndex]
@@ -3427,11 +2871,6 @@ function shuffleArray(array) {
     ];
   }
 }
-
-
-/* =========================================
-   HINT SYSTEM
-========================================= */
 
 function startHintTimer() {
 
@@ -3445,7 +2884,6 @@ function startHintTimer() {
     return;
   }
 
-
   hintTimer =
     setTimeout(
       showHint,
@@ -3453,30 +2891,21 @@ function startHintTimer() {
     );
 }
 
-
-/* =========================================
-   SHOW HINT
-========================================= */
-
 function showHint() {
 
   const possibleMove =
     findPossibleMove();
 
-
   if (!possibleMove) {
     return;
   }
-
 
   idleHintCells = [
     possibleMove.first,
     possibleMove.second
   ];
 
-
   renderBoard();
-
 
   hintClearTimer =
     setTimeout(
@@ -3494,30 +2923,18 @@ function showHint() {
     );
 }
 
-
-/* =========================================
-   CLEAR HINT
-========================================= */
-
 function clearHint() {
 
   clearTimeout(hintTimer);
 
   hintTimer = null;
 
-
   clearTimeout(hintClearTimer);
 
   hintClearTimer = null;
 
-
   idleHintCells = [];
 }
-
-
-/* =========================================
-   END GAME
-========================================= */
 
 function endGame(won) {
 
@@ -3528,7 +2945,6 @@ function endGame(won) {
 
   finalScoreElement.textContent =
     score;
-
 
   if (won) {
 
@@ -3553,7 +2969,6 @@ function endGame(won) {
       "Coba lagi dan pecahkan skor sebelumnya.";
   }
 
-
   gameOverlay.hidden = false;
 
   gameOverlay.setAttribute(
@@ -3561,18 +2976,12 @@ function endGame(won) {
     "false"
   );
 
-
   setMessage(
     won
       ? "Target tercapai! Kamu menang."
       : "Langkah habis."
   );
 }
-
-
-/* =========================================
-   CLOSE OVERLAY
-========================================= */
 
 function hideOverlay() {
 
@@ -3583,11 +2992,6 @@ function hideOverlay() {
     "true"
   );
 }
-
-
-/* =========================================
-   MESSAGE
-========================================= */
 
 function setMessage(text) {
 
@@ -3600,11 +3004,6 @@ function setMessage(text) {
       text;
   }
 }
-
-
-/* =========================================
-   WAIT
-========================================= */
 
 function wait(milliseconds) {
 
@@ -3619,11 +3018,6 @@ function wait(milliseconds) {
   );
 }
 
-
-/* =========================================
-   GAME MODE
-========================================= */
-
 function setGameMode(mode) {
 
   if (mode === gameMode) {
@@ -3634,7 +3028,6 @@ function setGameMode(mode) {
 
   restartGame();
 }
-
 
 function updateModeButtons() {
 
@@ -3668,11 +3061,6 @@ function updateModeButtons() {
   }
 }
 
-
-/* =========================================
-   RESTART GAME
-========================================= */
-
 function restartGame() {
 
   score = 0;
@@ -3704,16 +3092,10 @@ function restartGame() {
   startHintTimer();
 }
 
-
-/* =========================================
-   BUTTON EVENTS
-========================================= */
-
 restartButton.addEventListener(
   "click",
   restartGame
 );
-
 
 if (overlayRestartButton) {
 
@@ -3723,7 +3105,6 @@ if (overlayRestartButton) {
   );
 }
 
-
 if (modeTargetButton) {
 
   modeTargetButton.addEventListener(
@@ -3732,7 +3113,6 @@ if (modeTargetButton) {
   );
 }
 
-
 if (modeUnlimitedButton) {
 
   modeUnlimitedButton.addEventListener(
@@ -3740,10 +3120,5 @@ if (modeUnlimitedButton) {
     () => setGameMode("unlimited")
   );
 }
-
-
-/* =========================================
-   START GAME
-========================================= */
 
 restartGame();
